@@ -1,0 +1,574 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pro Passport Photo Maker</title>
+    <style>
+        :root {
+            --primary: #2563eb;
+            --bg: #f1f5f9;
+            --panel: #ffffff;
+            --text: #1e293b;
+            --danger: #ef4444;
+        }
+
+        body {
+            font-family: 'Segoe UI', system-ui, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            margin: 0;
+            display: flex;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        /* --- Sidebar Controls --- */
+        .sidebar {
+            width: 380px;
+            background: var(--panel);
+            padding: 20px;
+            overflow-y: auto;
+            border-right: 1px solid #cbd5e1;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            box-shadow: 2px 0 10px rgba(0,0,0,0.05);
+            z-index: 10;
+        }
+
+        h2, h3 { margin: 0 0 10px 0; font-size: 1.1rem; color: #334155; border-bottom: 2px solid #e2e8f0; padding-bottom: 5px; }
+        
+        .control-group {
+            background: #f8fafc;
+            padding: 15px;
+            border-radius: 8px;
+            border: 1px solid #e2e8f0;
+        }
+
+        label { font-size: 0.85rem; font-weight: 600; display: block; margin-bottom: 5px; }
+        
+        input[type="range"] { width: 100%; cursor: pointer; }
+        
+        button {
+            background: var(--primary);
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 500;
+            transition: 0.2s;
+            width: 100%;
+            margin-bottom: 5px;
+        }
+        button:hover { opacity: 0.9; }
+        button.danger { background: var(--danger); }
+        button.secondary { background: #64748b; }
+        
+        .color-options { display: flex; gap: 5px; margin-bottom: 10px; }
+        .color-btn { width: 30px; height: 30px; border-radius: 50%; border: 2px solid #cbd5e1; cursor: pointer; }
+        
+        /* --- Preview Area --- */
+        .preview-box {
+            width: 100%;
+            height: 200px;
+            background: repeating-conic-gradient(#eee 0% 25%, transparent 0% 50%) 50% / 20px 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: 2px dashed #cbd5e1;
+            margin-bottom: 10px;
+            overflow: hidden;
+            position: relative;
+        }
+        #processedCanvas { max-height: 100%; max-width: 100%; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+
+        /* --- Main Workspace (A4) --- */
+        .workspace {
+            flex: 1;
+            background: #cbd5e1;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            padding: 40px;
+            overflow: auto;
+        }
+
+        #a4-sheet {
+            /* A4 Dimensions at 96 DPI for screen viewing, scaled logic applied later */
+            width: 210mm;
+            height: 297mm;
+            background: white;
+            box-shadow: 0 0 20px rgba(0,0,0,0.2);
+            position: relative; /* For absolute dragging */
+            overflow: hidden;
+        }
+
+        /* The Photo on Sheet */
+        .passport-photo {
+            /* 2.79cm x 3.81cm */
+            width: 27.9mm;
+            height: 38.1mm;
+            position: absolute;
+            cursor: grab;
+            user-select: none;
+            box-sizing: border-box;
+            /* Thin guideline border for cutting */
+            border: 1px solid #e2e8f0; 
+            transition: transform 0.1s;
+        }
+
+        .passport-photo:active { cursor: grabbing; z-index: 100; box-shadow: 0 5px 15px rgba(0,0,0,0.2); }
+        
+        .passport-photo .delete-btn {
+            position: absolute;
+            top: -5px;
+            right: -5px;
+            width: 15px;
+            height: 15px;
+            background: red;
+            color: white;
+            border-radius: 50%;
+            font-size: 10px;
+            display: none; /* Show on hover */
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            z-index: 101;
+        }
+        .passport-photo:hover .delete-btn { display: flex; }
+
+        /* Grid Helper */
+        .grid-overlay {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            pointer-events: none;
+            background-size: 27.9mm 38.1mm;
+            background-image: 
+                linear-gradient(to right, #f1f5f9 1px, transparent 1px),
+                linear-gradient(to bottom, #f1f5f9 1px, transparent 1px);
+            opacity: 0;
+            z-index: 0;
+        }
+        #showGrid:checked ~ .workspace #a4-sheet .grid-overlay { opacity: 1; }
+
+        .loader { display: none; text-align: center; color: var(--primary); font-weight: bold; margin: 10px 0; }
+
+        /* --- Print Styles --- */
+        @media print {
+            body { background: white; display: block; height: auto; overflow: visible; }
+            .sidebar, .workspace { display: none; padding: 0; margin: 0; }
+            #a4-sheet {
+                display: block;
+                position: absolute;
+                top: 0; left: 0;
+                width: 210mm;
+                height: 297mm;
+                box-shadow: none;
+                margin: 0;
+                print-color-adjust: exact;
+                -webkit-print-color-adjust: exact;
+            }
+            .passport-photo { border: 1px solid #ccc; /* Ensure cut lines print */ }
+            .delete-btn, .grid-overlay { display: none !important; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="sidebar">
+        <h2>Passport Studio</h2>
+        
+        <div class="control-group">
+            <label>1. Image Source</label>
+            <input type="file" id="imageInput" accept="image/*">
+            <div id="loader" class="loader">Processing AI Remove...</div>
+            <button onclick="processBgRemove()">✨ Auto Remove Background (AI)</button>
+            <small style="font-size: 10px; color: #666;">Powered by rembg-api-deic.onrender.com</small>
+        </div>
+
+        <div class="control-group">
+            <label>2. Adjustments</label>
+            <label>Background Color</label>
+            <div class="color-options">
+                <div class="color-btn" style="background:white" onclick="setBg('white')"></div>
+                <div class="color-btn" style="background:#3b82f6" onclick="setBg('#3b82f6')"></div>
+                <div class="color-btn" style="background:#22c55e" onclick="setBg('#22c55e')"></div>
+                <div class="color-btn" style="background:#ef4444" onclick="setBg('#ef4444')"></div>
+                <input type="color" id="customColor" onchange="setBg(this.value)" style="height:30px; width:30px; padding:0; border:none;">
+            </div>
+            <label>Upload Background Image</label>
+            <input type="file" id="bgImageInput" onchange="loadBgImage(this)">
+
+            <label>Brightness <span id="brightVal">100%</span></label>
+            <input type="range" min="0" max="200" value="100" id="brightness" oninput="updateEditor()">
+            
+            <label>Contrast <span id="contVal">100%</span></label>
+            <input type="range" min="0" max="200" value="100" id="contrast" oninput="updateEditor()">
+        </div>
+
+        <div class="preview-box">
+            <canvas id="editorCanvas"></canvas>
+        </div>
+
+        <div class="control-group">
+            <h3>3. A4 Layout & Print</h3>
+            
+            <div style="display: flex; gap: 5px; align-items: center; margin-bottom: 10px;">
+                <label style="margin:0; flex:1;">Copies:</label>
+                <input type="number" id="copyCount" value="1" min="1" max="50" style="width: 50px;">
+                <button class="secondary" style="width: auto; margin:0;" onclick="addCopies()">Add</button>
+            </div>
+            
+            <label>Alignment (When Adding):</label>
+            <select id="alignment" style="width:100%; padding: 5px; margin-bottom: 10px;">
+                <option value="left">Start from Left</option>
+                <option value="center">Center of Page</option>
+                <option value="right">Start from Right</option>
+            </select>
+
+            <label>Fast Dials (Presets):</label>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 5px;">
+                <button class="secondary" onclick="preset('square4')">4 Square</button>
+                <button class="secondary" onclick="preset('line6')">6 (1 Line)</button>
+                <button class="secondary" onclick="preset('grid8')">8 Grid</button>
+                <button class="secondary" onclick="preset('full')">Full Page (30+)</button>
+            </div>
+
+            <div style="margin-top: 10px; display: flex; align-items: center; gap: 5px;">
+                <input type="checkbox" id="showGrid"> <label for="showGrid" style="margin:0; display:inline;">Show Guidelines</label>
+            </div>
+            
+            <div style="margin-top: 15px;">
+                <button class="danger" onclick="clearSheet()">Clear Sheet</button>
+                <button onclick="window.print()" style="font-size: 1.1em;">🖨️ PRINT A4</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="workspace">
+        <div id="a4-sheet">
+            <div class="grid-overlay"></div>
+            </div>
+    </div>
+
+<script>
+    // --- Configuration ---
+    // 300 DPI calculations
+    // Width: 2.79cm = ~330px
+    // Height: 3.81cm = ~450px
+    const PHOTO_W = 330;
+    const PHOTO_H = 450;
+    
+    // A4 Dimensions in Pixels (for CSS scaling relative to mm)
+    // 1mm ~ 3.78px
+    const MM_TO_PX = 3.7795;
+    const A4_W_MM = 210;
+    const SHEET_PADDING_MM = 10; // Margin for printer
+    const PHOTO_W_MM = 27.9;
+    const PHOTO_H_MM = 38.1;
+    const GAP_MM = 2; // Gap between photos
+
+    let originalImage = null; // The uploaded user image
+    let subjectImage = null;  // The image after BG removal (or just original if not removed)
+    let bgImage = null;       // Custom background image
+    let bgColor = 'white';
+    
+    const canvas = document.getElementById('editorCanvas');
+    const ctx = canvas.getContext('2d');
+    const sheet = document.getElementById('a4-sheet');
+
+    // Initialize Canvas
+    canvas.width = PHOTO_W;
+    canvas.height = PHOTO_H;
+
+    // --- 1. Image Upload ---
+    document.getElementById('imageInput').addEventListener('change', function(e) {
+        const file = e.target.files[0];
+        if(!file) return;
+
+        const reader = new FileReader();
+        reader.onload = function(event) {
+            const img = new Image();
+            img.onload = function() {
+                originalImage = img;
+                subjectImage = img; // Default to original until BG removed
+                updateEditor();
+            }
+            img.src = event.target.result;
+        }
+        reader.readAsDataURL(file);
+    });
+
+    // --- 2. Background Removal API ---
+    async function processBgRemove() {
+        const fileInput = document.getElementById('imageInput');
+        if (!fileInput.files[0]) { alert("Please upload an image first."); return; }
+
+        document.getElementById('loader').style.display = 'block';
+        
+        const formData = new FormData();
+        formData.append('file', fileInput.files[0]);
+
+        try {
+            // Using the user-provided Render API
+            const response = await fetch('https://rembg-api-deic.onrender.com/api/remove', {
+                method: 'POST',
+                body: formData
+            });
+
+            if (!response.ok) throw new Error('API Error');
+
+            const blob = await response.blob();
+            const url = URL.createObjectURL(blob);
+            
+            const img = new Image();
+            img.onload = function() {
+                subjectImage = img; // Update subject to the PNG with transparent BG
+                document.getElementById('loader').style.display = 'none';
+                updateEditor();
+            }
+            img.src = url;
+
+        } catch (error) {
+            alert("Error removing background. The free server might be sleeping. Please try again in 30 seconds or use the manual upload.");
+            document.getElementById('loader').style.display = 'none';
+            console.error(error);
+        }
+    }
+
+    // --- 3. Editor Logic (Canvas Composition) ---
+    function setBg(color) {
+        bgColor = color;
+        bgImage = null; // Clear image if color selected
+        updateEditor();
+    }
+
+    function loadBgImage(input) {
+        if (input.files && input.files[0]) {
+            const reader = new FileReader();
+            reader.onload = function (e) {
+                const img = new Image();
+                img.onload = function() {
+                    bgImage = img;
+                    updateEditor();
+                };
+                img.src = e.target.result;
+            };
+            reader.readAsDataURL(input.files[0]);
+        }
+    }
+
+    function updateEditor() {
+        if (!subjectImage) return;
+
+        // Clear Canvas
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+        // 1. Draw Background
+        if (bgImage) {
+            // Scale BG image to cover
+            const ratio = Math.max(canvas.width / bgImage.width, canvas.height / bgImage.height);
+            const centerShift_x = (canvas.width - bgImage.width * ratio) / 2;
+            const centerShift_y = (canvas.height - bgImage.height * ratio) / 2;
+            ctx.drawImage(bgImage, 0, 0, bgImage.width, bgImage.height, centerShift_x, centerShift_y, bgImage.width * ratio, bgImage.height * ratio);
+        } else {
+            ctx.fillStyle = bgColor;
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+        }
+
+        // 2. Apply Filters (Brightness/Contrast)
+        const brit = document.getElementById('brightness').value;
+        const cont = document.getElementById('contrast').value;
+        document.getElementById('brightVal').innerText = brit + '%';
+        document.getElementById('contVal').innerText = cont + '%';
+        
+        ctx.filter = `brightness(${brit}%) contrast(${cont}%)`;
+
+        // 3. Draw Subject (Fit to Passport Aspect Ratio)
+        // Logic: specific crop to ensure head fits well in 2.79x3.81
+        // We calculate 'cover' fit for the subject image
+        const sRatio = canvas.width / canvas.height;
+        const iRatio = subjectImage.width / subjectImage.height;
+        
+        let drawW, drawH, offX, offY;
+
+        if (iRatio > sRatio) {
+            // Image is wider than passport slot
+            drawH = canvas.height;
+            drawW = subjectImage.width * (canvas.height / subjectImage.height);
+            offY = 0;
+            offX = (canvas.width - drawW) / 2;
+        } else {
+            // Image is taller or equal
+            drawW = canvas.width;
+            drawH = subjectImage.height * (canvas.width / subjectImage.width);
+            offX = 0;
+            offY = (canvas.height - drawH) / 2; // Center vertically
+            // Adjust to favor top (headshot usually needs less space at top)
+            offY = Math.min(0, offY + 20); 
+        }
+
+        ctx.drawImage(subjectImage, offX, offY, drawW, drawH);
+        ctx.filter = 'none'; // Reset filter
+    }
+
+    // --- 4. Sheet Logic & Layout ---
+
+    function createPhotoElement() {
+        if (!subjectImage) { alert("Create an image first!"); return null; }
+        
+        const dataUrl = canvas.toDataURL('image/jpeg', 0.95);
+        const div = document.createElement('div');
+        div.className = 'passport-photo';
+        div.style.backgroundImage = `url(${dataUrl})`;
+        div.style.backgroundSize = 'cover';
+        
+        // Delete button
+        const btn = document.createElement('div');
+        btn.className = 'delete-btn';
+        btn.innerHTML = '×';
+        btn.onclick = (e) => { e.stopPropagation(); div.remove(); };
+        div.appendChild(btn);
+
+        // Drag Logic
+        makeDraggable(div);
+        
+        return div;
+    }
+
+    function addCopies() {
+        const count = parseInt(document.getElementById('copyCount').value);
+        const alignment = document.getElementById('alignment').value;
+        
+        // Find next available slot logic is complex for absolute drag, 
+        // so we will arrange them in a grid based on current count or user pref.
+        // For simplicity in "Add Copies", we append them in a flow based on MM.
+        
+        const existing = document.querySelectorAll('.passport-photo').length;
+        
+        let startX = SHEET_PADDING_MM;
+        let startY = SHEET_PADDING_MM;
+        
+        // Simple auto-layout logic for new adds
+        const colMax = Math.floor((A4_W_MM - (SHEET_PADDING_MM*2)) / (PHOTO_W_MM + GAP_MM));
+        
+        for(let i = 0; i < count; i++) {
+            const el = createPhotoElement();
+            if(!el) return;
+
+            // Calculate Grid Position based on index (existing + i)
+            const idx = existing + i;
+            const row = Math.floor(idx / colMax);
+            const col = idx % colMax;
+
+            let posX = startX + (col * (PHOTO_W_MM + GAP_MM));
+            let posY = startY + (row * (PHOTO_H_MM + GAP_MM));
+
+            // Alignment Logic adjustments
+            if (alignment === 'center') {
+                const totalRowW = (colMax * PHOTO_W_MM) + ((colMax-1) * GAP_MM);
+                const margin = (A4_W_MM - totalRowW) / 2;
+                posX = margin + (col * (PHOTO_W_MM + GAP_MM));
+            } else if (alignment === 'right') {
+                const totalRowW = (colMax * PHOTO_W_MM) + ((colMax-1) * GAP_MM);
+                const margin = (A4_W_MM - totalRowW - SHEET_PADDING_MM);
+                posX = margin + (col * (PHOTO_W_MM + GAP_MM));
+            }
+
+            el.style.left = posX + 'mm';
+            el.style.top = posY + 'mm';
+            sheet.appendChild(el);
+        }
+    }
+
+    function preset(type) {
+        if (!subjectImage) { alert("Prepare image first"); return; }
+        clearSheet();
+        
+        let count = 0;
+        let cols = 0;
+        let gap = GAP_MM;
+        let customTop = SHEET_PADDING_MM;
+
+        if (type === 'square4') {
+            count = 4;
+            // 2x2 grid specific
+            for(let i=0; i<4; i++) {
+                const el = createPhotoElement();
+                const r = Math.floor(i/2);
+                const c = i%2;
+                el.style.left = (SHEET_PADDING_MM + c*(PHOTO_W_MM+gap)) + 'mm';
+                el.style.top = (SHEET_PADDING_MM + r*(PHOTO_H_MM+gap)) + 'mm';
+                sheet.appendChild(el);
+            }
+            return;
+        } 
+        else if (type === 'line6') { count = 6; }
+        else if (type === 'grid8') { count = 8; }
+        else if (type === 'full') { count = 30; } // approx fit
+
+        // Generic Filler
+        const colMax = Math.floor((A4_W_MM - (SHEET_PADDING_MM*2)) / (PHOTO_W_MM + GAP_MM));
+        
+        for(let i=0; i<count; i++) {
+            const el = createPhotoElement();
+            const r = Math.floor(i/colMax);
+            const c = i%colMax;
+            
+            el.style.left = (SHEET_PADDING_MM + c*(PHOTO_W_MM+gap)) + 'mm';
+            el.style.top = (SHEET_PADDING_MM + r*(PHOTO_H_MM+gap)) + 'mm';
+            sheet.appendChild(el);
+        }
+    }
+
+    function clearSheet() {
+        const photos = document.querySelectorAll('.passport-photo');
+        photos.forEach(p => p.remove());
+    }
+
+    // --- 5. Drag and Drop Logic ---
+    function makeDraggable(el) {
+        let isDragging = false;
+        let startX, startY, initialLeft, initialTop;
+
+        el.addEventListener('mousedown', (e) => {
+            if(e.target.className === 'delete-btn') return;
+            
+            isDragging = true;
+            startX = e.clientX;
+            startY = e.clientY;
+            
+            // Get current mm position converted to px for calculation
+            const style = window.getComputedStyle(el);
+            // We need to parse the mm values or px values depending on browser return
+            // Easier: read inline style
+            initialLeft = parseFloat(el.style.left || 0);
+            initialTop = parseFloat(el.style.top || 0);
+        });
+
+        window.addEventListener('mousemove', (e) => {
+            if (!isDragging) return;
+            e.preventDefault();
+
+            const dxPx = e.clientX - startX;
+            const dyPx = e.clientY - startY;
+
+            // Convert movement from Pixels to MM
+            // Note: The workspace scale might differ, but generally screen px / 3.78 ~ mm
+            const dxMM = dxPx / MM_TO_PX; 
+            const dyMM = dyPx / MM_TO_PX;
+
+            el.style.left = (initialLeft + dxMM) + 'mm';
+            el.style.top = (initialTop + dyMM) + 'mm';
+        });
+
+        window.addEventListener('mouseup', () => {
+            isDragging = false;
+        });
+    }
+
+</script>
+</body>
+</html>
