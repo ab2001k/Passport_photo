@@ -301,26 +301,28 @@
         reader.readAsDataURL(file);
     });
 
-   // --- 2. Background Removal API (Local Python Backend) ---
+  // --- 2. Background Removal API ---
     async function processBgRemove() {
         const fileInput = document.getElementById('imageInput');
         if (!fileInput.files[0]) { alert("Please upload an image first."); return; }
 
         document.getElementById('loader').style.display = 'block';
-        document.getElementById('loader').innerText = "Processing on Local Server...";
+        document.getElementById('loader').innerText = "Processing (Wake up server may take 50s)...";
         
         const formData = new FormData();
-        // IMPORTANT: This key must match request.files["image"] in your flask app
         formData.append('image', fileInput.files[0]); 
 
         try {
-            // Pointing to your local Flask app
-            const response = await fetch('http://127.0.0.1:5000/remove-bg', {
+            // REPLACE THIS URL with your actual Render URL
+            // Example: https://my-passport-api.onrender.com/remove-bg
+            const apiUrl = 'https://YOUR-APP-NAME.onrender.com/remove-bg'; 
+            
+            const response = await fetch(apiUrl, {
                 method: 'POST',
                 body: formData
             });
 
-            if (!response.ok) throw new Error('Server Error');
+            if (!response.ok) throw new Error('API Error');
 
             const blob = await response.blob();
             const url = URL.createObjectURL(blob);
@@ -334,7 +336,7 @@
             img.src = url;
 
         } catch (error) {
-            alert("Error: Ensure your Python app.py is running on port 5000!");
+            alert("Server Error. If using Free Render, wait 1 minute and try again (Cold Start).");
             document.getElementById('loader').style.display = 'none';
             console.error(error);
         }
