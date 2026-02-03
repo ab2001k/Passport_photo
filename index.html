@@ -301,38 +301,40 @@
         reader.readAsDataURL(file);
     });
 
-    // --- 2. Background Removal API ---
+   // --- 2. Background Removal API (Local Python Backend) ---
     async function processBgRemove() {
         const fileInput = document.getElementById('imageInput');
         if (!fileInput.files[0]) { alert("Please upload an image first."); return; }
 
         document.getElementById('loader').style.display = 'block';
+        document.getElementById('loader').innerText = "Processing on Local Server...";
         
         const formData = new FormData();
-        formData.append('file', fileInput.files[0]);
+        // IMPORTANT: This key must match request.files["image"] in your flask app
+        formData.append('image', fileInput.files[0]); 
 
         try {
-            // Using the user-provided Render API
-            const response = await fetch('https://rembg-api-deic.onrender.com/api/remove', {
+            // Pointing to your local Flask app
+            const response = await fetch('http://127.0.0.1:5000/remove-bg', {
                 method: 'POST',
                 body: formData
             });
 
-            if (!response.ok) throw new Error('API Error');
+            if (!response.ok) throw new Error('Server Error');
 
             const blob = await response.blob();
             const url = URL.createObjectURL(blob);
             
             const img = new Image();
             img.onload = function() {
-                subjectImage = img; // Update subject to the PNG with transparent BG
+                subjectImage = img; 
                 document.getElementById('loader').style.display = 'none';
                 updateEditor();
             }
             img.src = url;
 
         } catch (error) {
-            alert("Error removing background. The free server might be sleeping. Please try again in 30 seconds or use the manual upload.");
+            alert("Error: Ensure your Python app.py is running on port 5000!");
             document.getElementById('loader').style.display = 'none';
             console.error(error);
         }
