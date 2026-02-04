@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Pro Passport Studio V6 (Perfect Fit)</title>
+    <title>Passport Studio V7 (Stable)</title>
     <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>📸</text></svg>">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.css">
@@ -15,11 +15,11 @@
             --bg: #f8fafc;
             --panel: #ffffff;
             --border: #cbd5e1;
-            /* Precise Dimensions: 1.2" x 1.4" */
+            /* Exact Size: 1.2" x 1.4" */
             --p-width: 30.48mm;
             --p-height: 35.56mm;
-            /* Default gap (adjustable via slider) */
-            --gap: 3mm; 
+            /* Tighter Gap for Safety */
+            --gap: 1.5mm; 
         }
 
         body {
@@ -28,9 +28,9 @@
             margin: 0; display: flex; height: 100vh; overflow: hidden;
         }
 
-        /* --- Sidebar --- */
+        /* Sidebar */
         .sidebar {
-            width: 350px; background: var(--panel); padding: 15px;
+            width: 340px; background: var(--panel); padding: 15px;
             border-right: 1px solid var(--border);
             display: flex; flex-direction: column; gap: 12px;
             overflow-y: auto; z-index: 20;
@@ -52,7 +52,6 @@
             border: 1px solid var(--border); border-radius: 4px; box-sizing: border-box; font-size: 0.8rem;
         }
 
-        /* Buttons */
         button {
             background: var(--primary); color: white; border: none; padding: 10px;
             border-radius: 6px; cursor: pointer; font-weight: 600; width: 100%;
@@ -63,11 +62,7 @@
         button.secondary { background: white; color: #333; border: 1px solid var(--border); }
         button.danger { background: #ef4444; color: white; }
 
-        /* API UI */
-        .api-active { background: #dcfce7; border: 1px solid #86efac; padding: 10px; border-radius: 6px; }
-        .api-status { color: #15803d; font-weight: bold; font-size: 0.85rem; margin-bottom: 5px; }
-
-        /* Color Picker Wrapper with Icon */
+        /* Color Picker */
         .color-picker-wrapper {
             position: relative; width: 100%; height: 35px;
             border: 1px solid var(--border); border-radius: 6px;
@@ -83,7 +78,7 @@
             box-shadow: 0 2px 4px rgba(0,0,0,0.1); display: flex;
         }
 
-        /* --- Workspace (A4) --- */
+        /* Workspace */
         .workspace {
             flex: 1; background: #94a3b8; padding: 20px;
             display: flex; justify-content: center; align-items: flex-start; overflow: auto;
@@ -92,58 +87,58 @@
         #a4-sheet {
             width: 210mm; height: 297mm;
             background: white;
-            /* Safe Print Margin (5mm) */
-            padding: 5mm; 
+            padding: 5mm; /* Safe Margin */
             box-shadow: 0 0 20px rgba(0,0,0,0.3);
             box-sizing: border-box;
             
-            /* CSS Grid: 6 cols x 7 rows = 42 photos (Best fit for A4 with gaps) */
+            /* Grid: 6 cols x 7 rows = 42 Photos */
             display: grid;
             grid-template-columns: repeat(6, var(--p-width));
             grid-template-rows: repeat(7, var(--p-height));
             
-            /* Center the grid within the safe area */
-            justify-content: center; 
-            align-content: center;
-            
+            justify-content: center; align-content: center;
             gap: var(--gap);
         }
 
         /* Slots */
         .slot {
             width: var(--p-width); height: var(--p-height);
-            border: 1px dashed #e2e8f0; /* Guide borders */
-            position: relative; background-color: #f8fafc;
+            border: 1px dashed #e2e8f0; position: relative; background-color: #f8fafc;
         }
         
         .slot.filled {
-            border: 2px solid black; /* Print border */
+            border: 2px solid black; 
             background-size: cover; background-position: center; cursor: pointer;
         }
 
-        /* Red Hover Delete */
         .slot.filled:hover::after {
             content: ''; position: absolute; top:0; left:0; width:100%; height:100%;
             background: rgba(255, 0, 0, 0.5);
         }
         .slot.drag-over { border: 2px solid var(--primary); background: #dbeafe; }
 
-        /* Draggable Source */
+        /* Preview Source */
         #sourcePreview {
             width: 90px; height: 105px; background: #eee; border: 2px dashed #999;
             margin: 0 auto 10px auto; cursor: grab; background-size: cover;
             display: flex; align-items: center; justify-content: center; color: #aaa; font-size: 0.7rem;
         }
 
-        /* Print Logic */
+        /* Log Area */
+        #debugLog {
+            font-family: monospace; font-size: 10px; color: #666; 
+            background: #eee; padding: 5px; margin-top: 10px; 
+            height: 60px; overflow-y: auto; border: 1px solid #ccc;
+        }
+
+        /* Print */
         @media print {
             body { display: block; background: white; }
             .sidebar { display: none !important; }
             .workspace { padding: 0; margin: 0; height: auto; background: white; }
             #a4-sheet {
                 box-shadow: none; margin: 0; width: 100%; height: 100%;
-                /* Important: Keep 5mm padding to prevent printer cutoff */
-                padding: 5mm; 
+                padding: 5mm; /* Maintain Safe Margin on Print */
                 print-color-adjust: exact; -webkit-print-color-adjust: exact;
                 border: none;
             }
@@ -153,39 +148,33 @@
 
         .crop-box { height: 200px; background: #333; margin-bottom: 10px; }
         .loader { display:none; color: var(--primary); font-size: 0.75rem; text-align: center; margin-top:5px; }
+        .api-active { background: #dcfce7; border: 1px solid #86efac; padding: 10px; border-radius: 6px; }
     </style>
 </head>
 <body>
 
     <div class="sidebar">
-        <h2>Passport Studio V6</h2>
+        <h2>Passport Studio V7</h2>
         
         <div class="control-group">
             <label>⚙️ API Key (Remove.bg)</label>
             <div id="apiInputView">
                 <input type="text" id="apiKey" placeholder="Paste Key Here...">
                 <button onclick="saveKey()">Save Key</button>
-                <div style="text-align:right; font-size:0.7rem;">
-                    <a href="https://www.remove.bg/dashboard#api-key" target="_blank">Get Free Key</a>
-                </div>
             </div>
             <div id="apiActiveView" class="hidden api-active">
-                <div class="api-status">✅ Key Active</div>
-                <div style="display:flex; gap:5px;">
-                    <button onclick="testApi()" class="secondary" style="padding:5px;">Check Credits</button>
-                    <button onclick="removeKey()" class="danger" style="padding:5px;">Remove</button>
-                </div>
-                <div id="apiMsg" style="font-size:0.7rem; margin-top:5px;"></div>
+                <div style="color:green; font-weight:bold; font-size:0.8rem;">✅ Key Active</div>
+                <button onclick="removeKey()" class="danger" style="padding:5px; margin-top:5px;">Remove Key</button>
             </div>
         </div>
 
         <div class="control-group">
-            <label>1. Upload Photo</label>
+            <label>1. Upload</label>
             <input type="file" id="imgInput" accept="image/*">
         </div>
 
         <div id="editorPanel" class="control-group hidden">
-            <label>2. Edit & Crop</label>
+            <label>2. Crop & Edit</label>
             <div class="crop-box"><img id="cropImg" src=""></div>
             
             <label>Background Color</label>
@@ -195,8 +184,8 @@
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#333" stroke-width="2"><path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z"></path></svg>
                 </div>
             </div>
-            
-            <div style="display:flex; gap:5px; margin-top:8px;">
+
+            <div style="display:flex; gap:5px; margin-top:5px;">
                 <button onclick="setBg('white')" class="secondary">White</button>
                 <button onclick="setBg('#3b82f6')" class="secondary" style="color:#3b82f6">Blue</button>
             </div>
@@ -206,24 +195,26 @@
             <button onclick="runRemBg()" id="remBgBtn" style="background: linear-gradient(135deg, #6366f1, #8b5cf6);">
                 ✨ AI Remove BG
             </button>
-            <div id="loader" class="loader">Processing AI...</div>
+            <div id="loader" class="loader">Processing...</div>
             <button onclick="applyCrop()" class="secondary" style="margin-top:5px;">✂️ Apply Crop</button>
         </div>
 
         <div id="dragPanel" class="control-group hidden">
-            <label>3. Layout & Print</label>
-            <div id="sourcePreview" draggable="true" ondragstart="drag(event)">Source</div>
+            <label>3. Layout</label>
+            <div id="sourcePreview" draggable="true" ondragstart="drag(event)">Src</div>
             
             <button onclick="fillGrid()">Fill Page (42 Photos)</button>
             <button onclick="resetGrid()" class="danger" style="background:white; color:red; border:1px solid red;">Clear Sheet</button>
 
-            <div style="margin-top:15px; border-top:1px solid #ddd; padding-top:10px;">
-                <label>Spacing (Paddle): <span id="gapVal">3mm</span></label>
-                <input type="range" min="0" max="8" step="0.5" value="3" oninput="updateGap(this.value)">
+            <div style="margin-top:10px; border-top:1px solid #ddd; padding-top:10px;">
+                <label>Spacing: <span id="gapVal">1.5mm</span></label>
+                <input type="range" min="0" max="6" step="0.5" value="1.5" oninput="updateGap(this.value)">
             </div>
         </div>
 
-        <button onclick="window.print()" style="margin-top:auto; padding: 15px; font-size: 1.1rem; box-shadow: 0 -4px 10px rgba(0,0,0,0.1);">🖨️ PRINT A4</button>
+        <button onclick="window.print()" style="margin-top:auto; padding: 15px; font-size: 1.1rem;">🖨️ PRINT</button>
+        
+        <div id="debugLog">System Ready.</div>
     </div>
 
     <div class="workspace">
@@ -231,14 +222,20 @@
     </div>
 
 <script>
-    // --- Config ---
+    // Config: 1.2" / 1.4"
     const ASPECT_RATIO = 1.2 / 1.4;
-    // 6 Columns x 7 Rows = 42 Photos (Fits A4 safely with gaps)
     const TOTAL_SLOTS = 42; 
 
     let cropper = null;
     let finalImageURL = null;
     let currentBg = 'white';
+
+    function log(msg) {
+        const el = document.getElementById('debugLog');
+        el.innerText += '\n> ' + msg;
+        el.scrollTop = el.scrollHeight;
+        console.log(msg);
+    }
 
     window.onload = () => {
         checkApiKey();
@@ -257,15 +254,13 @@
                 if(this.classList.contains('filled')) {
                     this.style.backgroundImage = '';
                     this.classList.remove('filled');
-                } else if(finalImageURL) {
-                    fillSlot(this);
-                }
+                } else if(finalImageURL) fillSlot(this);
             };
             sheet.appendChild(slot);
         }
     }
 
-    // --- API Logic ---
+    // --- API ---
     function checkApiKey() {
         const k = localStorage.getItem('rembg_api_key');
         if(k) {
@@ -276,46 +271,26 @@
             document.getElementById('apiActiveView').classList.add('hidden');
         }
     }
-
     function saveKey() {
         const k = document.getElementById('apiKey').value.trim();
         if(!k) return alert("Enter Key!");
         localStorage.setItem('rembg_api_key', k);
         checkApiKey();
+        log("API Key Saved");
     }
-
     function removeKey() {
         localStorage.removeItem('rembg_api_key');
         document.getElementById('apiKey').value = '';
         checkApiKey();
+        log("API Key Removed");
     }
 
-    async function testApi() {
-        const msg = document.getElementById('apiMsg');
-        msg.innerText = "Connecting...";
-        const k = localStorage.getItem('rembg_api_key');
-        try {
-            const res = await fetch('https://corsproxy.io/?https://api.remove.bg/v1.0/account', {
-                headers: { 'X-Api-Key': k }
-            });
-            if(res.ok) {
-                const data = await res.json();
-                msg.innerText = `Credits: ${data.data.attributes.credits.total}`;
-                msg.style.color = 'green';
-            } else throw new Error("Check Key");
-        } catch(e) {
-            msg.innerText = "Connection Failed.";
-            msg.style.color = 'red';
-        }
-    }
-
-    // --- Gap Logic ---
+    // --- Core Logic ---
     function updateGap(val) {
         document.documentElement.style.setProperty('--gap', val + 'mm');
         document.getElementById('gapVal').innerText = val + 'mm';
     }
 
-    // --- Image & Crop ---
     document.getElementById('imgInput').addEventListener('change', function(e) {
         const file = e.target.files[0];
         if(!file) return;
@@ -327,38 +302,58 @@
             cropper = new Cropper(document.getElementById('cropImg'), {
                 aspectRatio: ASPECT_RATIO, viewMode: 1
             });
+            log("Image Loaded");
         };
         reader.readAsDataURL(file);
     });
 
     function setBg(c) { 
         currentBg = c;
-        document.getElementById('bgColorPicker').value = c; // Sync picker
-        if(finalImageURL) applyCrop(); // Auto update if already cropped
+        document.getElementById('bgColorPicker').value = c;
+        if(finalImageURL) applyCrop();
     }
 
     async function runRemBg() {
         const k = localStorage.getItem('rembg_api_key');
-        if(!k) { alert("Please save API Key first!"); return; }
+        if(!k) { alert("Save API Key first!"); return; }
         
         const loader = document.getElementById('loader');
         loader.style.display = 'block';
+        log("Sending to API...");
 
         cropper.getCroppedCanvas({ width: 600 }).toBlob(async (blob) => {
             const formData = new FormData();
             formData.append('image_file', blob);
             formData.append('size', 'auto');
+
             try {
-                const res = await fetch('https://corsproxy.io/?https://api.remove.bg/v1.0/removebg', {
+                // Using AllOrigins Proxy to bypass CORS
+                const proxyUrl = 'https://api.allorigins.win/raw?url=';
+                const targetUrl = encodeURIComponent('https://api.remove.bg/v1.0/removebg');
+                
+                const res = await fetch(proxyUrl + targetUrl, {
                     method: 'POST',
                     headers: { 'X-Api-Key': k },
                     body: formData
                 });
-                if(!res.ok) throw new Error("API Error: " + res.status);
-                const url = URL.createObjectURL(await res.blob());
+
+                if(!res.ok) {
+                    const txt = await res.text();
+                    log("API Error: " + res.status);
+                    if(res.status == 402) alert("Failed: No Credits left on this Key.");
+                    else if(res.status == 403) alert("Failed: Invalid API Key.");
+                    else alert("API Failed: " + res.status);
+                    throw new Error(res.status);
+                }
+
+                const rBlob = await res.blob();
+                const url = URL.createObjectURL(rBlob);
                 cropper.replace(url);
+                log("Background Removed!");
+
             } catch(e) {
-                alert("Error: " + e.message + "\nCheck credits or image size.");
+                console.error(e);
+                log("Error: " + e.message);
             } finally {
                 loader.style.display = 'none';
             }
@@ -380,6 +375,7 @@
         document.getElementById('sourcePreview').style.backgroundImage = `url(${finalImageURL})`;
         document.getElementById('sourcePreview').innerText = '';
         document.getElementById('dragPanel').classList.remove('hidden');
+        log("Crop Applied");
     }
 
     // --- Drag & Drop ---
