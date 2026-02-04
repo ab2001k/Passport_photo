@@ -97,7 +97,7 @@
             box-shadow: 0 0 20px rgba(0,0,0,0.3);
             box-sizing: border-box;
             
-            /* CSS Grid: 6 cols x 7 rows = 42 photos (Best fit for A4) */
+            /* CSS Grid: 6 cols x 7 rows = 42 photos (Best fit for A4 with gaps) */
             display: grid;
             grid-template-columns: repeat(6, var(--p-width));
             grid-template-rows: repeat(7, var(--p-height));
@@ -142,8 +142,7 @@
             .workspace { padding: 0; margin: 0; height: auto; background: white; }
             #a4-sheet {
                 box-shadow: none; margin: 0; width: 100%; height: 100%;
-                /* Important: Remove padding on print so printer margins apply naturally, 
-                   OR keep it if you want strict centering. 5mm is safe. */
+                /* Important: Keep 5mm padding to prevent printer cutoff */
                 padding: 5mm; 
                 print-color-adjust: exact; -webkit-print-color-adjust: exact;
                 border: none;
