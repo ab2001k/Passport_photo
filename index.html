@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Pro Passport Studio V4</title>
+    <title>Pro Passport Studio V5 (Fixed)</title>
     <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>📸</text></svg>">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.css">
@@ -12,46 +12,34 @@
     <style>
         :root {
             --primary: #2563eb;
-            --success: #10b981;
             --bg: #f8fafc;
             --panel: #ffffff;
             --border: #cbd5e1;
-            /* 1.2 x 1.4 inch Dimensions */
+            /* 1.2" x 1.4" */
             --p-width: 30.48mm;
             --p-height: 35.56mm;
-            --gap: 3mm; /* Default Gap */
+            --gap: 3mm; /* Dynamic Gap */
         }
 
         body {
             font-family: 'Inter', sans-serif;
             background: var(--bg);
-            margin: 0;
-            display: flex;
-            height: 100vh;
-            overflow: hidden;
+            margin: 0; display: flex; height: 100vh; overflow: hidden;
         }
 
-        /* --- Sidebar --- */
+        /* Sidebar */
         .sidebar {
-            width: 340px;
-            background: var(--panel);
-            padding: 15px;
+            width: 340px; background: var(--panel); padding: 15px;
             border-right: 1px solid var(--border);
-            display: flex;
-            flex-direction: column;
-            gap: 12px;
-            overflow-y: auto;
-            z-index: 10;
+            display: flex; flex-direction: column; gap: 12px;
+            overflow-y: auto; z-index: 10;
             box-shadow: 2px 0 10px rgba(0,0,0,0.05);
         }
 
         h2 { margin: 0; font-size: 1.1rem; padding-bottom: 8px; border-bottom: 1px solid var(--border); }
 
         .control-group {
-            background: #f1f5f9;
-            padding: 12px;
-            border-radius: 8px;
-            border: 1px solid var(--border);
+            background: #f1f5f9; padding: 12px; border-radius: 8px; border: 1px solid var(--border);
         }
         
         .hidden { display: none !important; }
@@ -73,99 +61,71 @@
         button.secondary { background: white; color: #333; border: 1px solid var(--border); }
         button.danger { background: #ef4444; color: white; }
 
-        /* --- API Manager Styles --- */
+        /* API Status UI */
         .api-active {
-            display: flex; flex-direction: column; gap: 5px;
             background: #dcfce7; border: 1px solid #86efac; padding: 10px; border-radius: 6px;
         }
-        .api-status { color: #15803d; font-weight: bold; font-size: 0.85rem; display: flex; align-items: center; gap: 5px; }
-        .link-btn { font-size: 0.75rem; text-decoration: underline; color: var(--primary); cursor: pointer; border: none; background: none; padding: 0; width: auto; display: inline; }
+        .api-status { color: #15803d; font-weight: bold; font-size: 0.85rem; margin-bottom: 5px; }
 
-        /* --- Gap Slider --- */
-        input[type=range] { width: 100%; cursor: pointer; }
-
-        /* --- Workspace --- */
+        /* Workspace */
         .workspace {
-            flex: 1;
-            background: #94a3b8;
-            padding: 30px;
-            display: flex;
-            justify-content: center;
-            align-items: flex-start;
-            overflow: auto;
+            flex: 1; background: #94a3b8; padding: 30px;
+            display: flex; justify-content: center; align-items: flex-start; overflow: auto;
         }
 
         #a4-sheet {
             width: 210mm; height: 297mm;
             background: white;
-            padding: 10mm; /* Printer Margin */
+            padding: 10mm;
             box-shadow: 0 0 20px rgba(0,0,0,0.3);
             box-sizing: border-box;
             
-            /* Grid Layout */
+            /* CSS Grid: 6 cols x 8 rows = 48 photos */
             display: grid;
             grid-template-columns: repeat(6, var(--p-width));
-            /* 8 Rows to fill page */
-            grid-template-rows: repeat(8, var(--p-height)); 
+            grid-template-rows: repeat(8, var(--p-height));
             gap: var(--gap);
-            justify-content: center;
-            align-content: start;
+            justify-content: center; align-content: start;
         }
 
-        /* --- Slots & Photos --- */
+        /* Slots */
         .slot {
-            width: var(--p-width);
-            height: var(--p-height);
-            border: 1px dashed #e2e8f0; /* Visible on screen to see grid */
-            position: relative;
-            background-color: #f8fafc;
-            transition: 0.1s;
+            width: var(--p-width); height: var(--p-height);
+            border: 1px dashed #e2e8f0; /* Guide borders */
+            position: relative; background-color: #f8fafc;
         }
         
-        /* Filled State */
         .slot.filled {
-            border: 2px solid black; /* Black Border for print */
-            background-size: cover;
-            background-position: center;
-            background-repeat: no-repeat;
-            cursor: pointer;
+            border: 2px solid black; /* Print border */
+            background-size: cover; background-position: center; cursor: pointer;
         }
 
-        /* Drag Hint */
-        .slot.drag-over { background-color: #dbeafe; border: 2px solid var(--primary); }
-
-        /* Delete Hover Effect (Red Overlay) */
+        /* Red Hover Effect */
         .slot.filled:hover::after {
-            content: 'REMOVE';
-            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(239, 68, 68, 0.8); /* Red tint */
-            color: white; font-weight: bold; font-size: 0.7rem;
-            display: flex; align-items: center; justify-content: center;
+            content: ''; position: absolute; top:0; left:0; width:100%; height:100%;
+            background: rgba(255, 0, 0, 0.5); /* Full Red Overlay */
         }
+        .slot.drag-over { border: 2px solid var(--primary); background: #dbeafe; }
 
-        /* --- Draggable Source --- */
+        /* Source Preview */
         #sourcePreview {
-            width: 90px; height: 105px;
-            background: #eee; border: 2px dashed #999;
-            margin: 0 auto 10px auto; cursor: grab;
-            background-size: cover; background-position: center;
+            width: 90px; height: 105px; background: #eee; border: 2px dashed #999;
+            margin: 0 auto 10px auto; cursor: grab; background-size: cover;
             display: flex; align-items: center; justify-content: center; color: #aaa; font-size: 0.7rem;
         }
 
-        /* --- Print Styles --- */
+        /* Print Logic */
         @media print {
             body { display: block; background: white; }
             .sidebar { display: none !important; }
-            .workspace { padding: 0; margin: 0; overflow: visible; height: auto; background: white; }
+            .workspace { padding: 0; margin: 0; height: auto; background: white; }
             #a4-sheet {
-                margin: 0; box-shadow: none; width: 100%; height: 100%;
+                box-shadow: none; margin: 0; border: none; width: 100%; height: 100%;
                 print-color-adjust: exact; -webkit-print-color-adjust: exact;
-                border: none;
-                /* Remove padding on print if printer handles margins, or keep specific */
             }
-            /* Hide Empty Slots */
-            .slot { border: none; background: transparent; }
-            /* Show Filled Slots */
+            /* Hide empty slots completely on print */
+            .slot { border: none; background: transparent; } 
+            /* Show photos */
             .slot.filled { border: 2px solid black !important; }
         }
 
@@ -176,26 +136,26 @@
 <body>
 
     <div class="sidebar">
-        <h2>Pro Passport Studio V4</h2>
+        <h2>Pro Passport V5</h2>
         
         <div class="control-group">
-            <label>⚙️ API Settings</label>
+            <label>⚙️ API Key (Remove.bg)</label>
             
             <div id="apiInputView">
-                <input type="text" id="apiKey" placeholder="Paste Remove.bg API Key">
-                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:5px;">
-                    <a href="https://www.remove.bg/api#remove-background" target="_blank" class="link-btn">Get API Key</a>
-                    <button onclick="saveKey()" style="width:auto; padding:5px 10px; margin:0;">Save</button>
+                <input type="text" id="apiKey" placeholder="Paste Key Here...">
+                <button onclick="saveKey()">Save Key</button>
+                <div style="text-align:right; font-size:0.7rem;">
+                    <a href="https://www.remove.bg/dashboard#api-key" target="_blank">Get Key</a>
                 </div>
             </div>
 
             <div id="apiActiveView" class="hidden api-active">
-                <div class="api-status">✅ API Active</div>
+                <div class="api-status">✅ Key Active</div>
                 <div style="display:flex; gap:5px;">
-                    <button onclick="testApi()" class="secondary" style="font-size:0.7rem; padding:5px;">Test Key</button>
-                    <button onclick="removeKey()" class="danger" style="font-size:0.7rem; padding:5px;">Remove</button>
+                    <button onclick="testApi()" class="secondary" style="padding:6px;">Check Credits</button>
+                    <button onclick="removeKey()" class="danger" style="padding:6px;">Remove</button>
                 </div>
-                <div id="apiMsg" style="font-size:0.7rem; color:#666;"></div>
+                <div id="apiMsg" style="font-size:0.7rem; margin-top:5px; color:#333;"></div>
             </div>
         </div>
 
@@ -208,45 +168,43 @@
             <label>2. Crop & Edit</label>
             <div class="crop-box"><img id="cropImg" src=""></div>
             
-            <div style="display:flex; gap:5px; margin-bottom:10px;">
-                <button onclick="setBg('white')" class="secondary" style="background:white;">White</button>
-                <button onclick="setBg('#3b82f6')" class="secondary" style="background:#3b82f6; color:white;">Blue</button>
-                <button onclick="setBg('#ef4444')" class="secondary" style="background:#ef4444; color:white;">Red</button>
-                <input type="color" onchange="setBg(this.value)" style="width:40px; height:35px; padding:0; border:none;">
+            <div style="display:flex; gap:5px; margin-bottom:8px;">
+                <button onclick="setBg('white')" class="secondary" style="background:white">White</button>
+                <button onclick="setBg('#3b82f6')" class="secondary" style="background:#3b82f6; color:white">Blue</button>
+                <input type="color" onchange="setBg(this.value)" style="flex:1; padding:0; height:36px; border:none">
             </div>
 
-            <button onclick="runRemBg()" id="remBgBtn">✨ Remove Background (AI)</button>
+            <button onclick="runRemBg()" id="remBgBtn" style="background: linear-gradient(135deg, #6366f1, #8b5cf6);">
+                ✨ AI Remove Background
+            </button>
+            <div id="loader" class="loader">Processing API...</div>
             <button onclick="applyCrop()" class="secondary">✂️ Confirm Crop</button>
-            <div id="loader" class="loader">Processing...</div>
         </div>
 
         <div id="dragPanel" class="control-group hidden">
-            <label>3. Layout Controls</label>
-            <div id="sourcePreview" draggable="true" ondragstart="drag(event)">Source</div>
+            <label>3. Layout</label>
+            <div id="sourcePreview" draggable="true" ondragstart="drag(event)">Src</div>
             
-            <button onclick="fillGrid()">Fill Sheet (48 Copies)</button>
+            <button onclick="fillGrid()">Fill Page (48 Photos)</button>
             <button onclick="resetGrid()" class="danger" style="background:white; color:red; border:1px solid red;">Clear Sheet</button>
 
             <div style="margin-top:15px; border-top:1px solid #ddd; padding-top:10px;">
-                <label>Spacing (Gap): <span id="gapVal">3mm</span></label>
+                <label>Paddle Bar (Gap): <span id="gapVal">3mm</span></label>
                 <input type="range" min="0" max="10" step="0.5" value="3" oninput="updateGap(this.value)">
             </div>
         </div>
 
-        <button onclick="window.print()" style="margin-top:auto; padding: 15px; font-size: 1.1rem; box-shadow: 0 -4px 10px rgba(0,0,0,0.1);">🖨️ PRINT SHEET</button>
+        <button onclick="window.print()" style="margin-top:auto; padding: 15px; font-size: 1.1rem; box-shadow: 0 -4px 10px rgba(0,0,0,0.1);">🖨️ PRINT</button>
     </div>
 
     <div class="workspace">
-        <div id="a4-sheet">
-            </div>
+        <div id="a4-sheet"></div>
     </div>
 
 <script>
-    // --- Config ---
+    // Config: 1.2 / 1.4 Aspect Ratio
     const ASPECT_RATIO = 1.2 / 1.4;
-    const ROWS = 8; // Increased to fill page
-    const COLS = 6;
-    const TOTAL_SLOTS = ROWS * COLS; 
+    const TOTAL_SLOTS = 48; // 6 cols * 8 rows
 
     let cropper = null;
     let finalImageURL = null;
@@ -264,16 +222,14 @@
         for(let i=0; i<TOTAL_SLOTS; i++) {
             const slot = document.createElement('div');
             slot.className = 'slot';
-            // Events
             slot.ondragover = allowDrop;
             slot.ondrop = drop;
             slot.onclick = function() { 
+                // Click to Delete or Fill
                 if(this.classList.contains('filled')) {
-                    // Remove photo
                     this.style.backgroundImage = '';
                     this.classList.remove('filled');
                 } else if(finalImageURL) {
-                    // Quick Fill
                     fillSlot(this);
                 }
             };
@@ -281,7 +237,7 @@
         }
     }
 
-    // --- API Manager Logic ---
+    // --- API Logic ---
     function checkApiKey() {
         const k = localStorage.getItem('rembg_api_key');
         if(k) {
@@ -295,48 +251,47 @@
 
     function saveKey() {
         const k = document.getElementById('apiKey').value.trim();
-        if(!k) return alert("Enter a key first!");
+        if(!k) return alert("Enter Key!");
         localStorage.setItem('rembg_api_key', k);
         checkApiKey();
     }
 
     function removeKey() {
-        if(confirm("Remove saved API Key?")) {
-            localStorage.removeItem('rembg_api_key');
-            document.getElementById('apiKey').value = '';
-            document.getElementById('apiMsg').innerText = '';
-            checkApiKey();
-        }
+        localStorage.removeItem('rembg_api_key');
+        document.getElementById('apiKey').value = '';
+        checkApiKey();
     }
 
     async function testApi() {
         const msg = document.getElementById('apiMsg');
-        msg.innerText = "Testing...";
+        msg.innerText = "Checking...";
         const k = localStorage.getItem('rembg_api_key');
+        
         try {
-            const res = await fetch('https://api.remove.bg/v1.0/account', {
+            // Using CORS Proxy for check
+            const res = await fetch('https://corsproxy.io/?https://api.remove.bg/v1.0/account', {
                 headers: { 'X-Api-Key': k }
             });
             if(res.ok) {
                 const data = await res.json();
-                msg.innerText = `✅ Success! Credits: ${data.data.attributes.credits.total}`;
+                msg.innerText = `Credits: ${data.data.attributes.credits.total} | Free: ${data.data.attributes.api.free_calls}`;
                 msg.style.color = 'green';
             } else {
-                throw new Error("Invalid Key");
+                throw new Error(res.status);
             }
         } catch(e) {
-            msg.innerText = "❌ Failed. Check Key.";
+            msg.innerText = "Error: Invalid Key or CORS blocked.";
             msg.style.color = 'red';
         }
     }
 
-    // --- Gap Control ---
+    // --- Gap ---
     function updateGap(val) {
         document.documentElement.style.setProperty('--gap', val + 'mm');
         document.getElementById('gapVal').innerText = val + 'mm';
     }
 
-    // --- Image & Crop Logic ---
+    // --- Editor ---
     document.getElementById('imgInput').addEventListener('change', function(e) {
         const file = e.target.files[0];
         if(!file) return;
@@ -346,8 +301,7 @@
             document.getElementById('editorPanel').classList.remove('hidden');
             if(cropper) cropper.destroy();
             cropper = new Cropper(document.getElementById('cropImg'), {
-                aspectRatio: ASPECT_RATIO,
-                viewMode: 1
+                aspectRatio: ASPECT_RATIO, viewMode: 1
             });
         };
         reader.readAsDataURL(file);
@@ -355,28 +309,41 @@
 
     function setBg(c) { currentBg = c; }
 
+    // --- REMOVE BG (THE FIX) ---
     async function runRemBg() {
         const k = localStorage.getItem('rembg_api_key');
-        if(!k) { alert("Please set API Key first."); return; }
+        if(!k) { alert("Please save API Key first!"); return; }
         
         const loader = document.getElementById('loader');
         loader.style.display = 'block';
 
-        cropper.getCroppedCanvas().toBlob(async (blob) => {
+        // 1. Get Blob
+        cropper.getCroppedCanvas({ width: 600 }).toBlob(async (blob) => {
             const formData = new FormData();
             formData.append('image_file', blob);
             formData.append('size', 'auto');
+
             try {
-                const res = await fetch('https://api.remove.bg/v1.0/removebg', {
+                // 2. FETCH VIA CORS PROXY
+                const res = await fetch('https://corsproxy.io/?https://api.remove.bg/v1.0/removebg', {
                     method: 'POST',
                     headers: { 'X-Api-Key': k },
                     body: formData
                 });
-                if(!res.ok) throw new Error("API Error");
-                const url = URL.createObjectURL(await res.blob());
+
+                if(!res.ok) {
+                    if(res.status === 402) throw new Error("No Credits left (402)");
+                    if(res.status === 403) throw new Error("Invalid Key (403)");
+                    if(res.status === 400) throw new Error("Image too big/bad format (400)");
+                    throw new Error("API Error: " + res.status);
+                }
+
+                const rBlob = await res.blob();
+                const url = URL.createObjectURL(rBlob);
                 cropper.replace(url);
+
             } catch(e) {
-                alert("BG Removal Failed. Check Key or Quota.");
+                alert(e.message + "\n\nTip: Check API Key credits.");
             } finally {
                 loader.style.display = 'none';
             }
@@ -389,6 +356,7 @@
         const finalCvs = document.createElement('canvas');
         finalCvs.width = cvs.width; finalCvs.height = cvs.height;
         const ctx = finalCvs.getContext('2d');
+        
         ctx.fillStyle = currentBg;
         ctx.fillRect(0,0, finalCvs.width, finalCvs.height);
         ctx.drawImage(cvs, 0, 0);
@@ -402,27 +370,22 @@
     // --- Drag & Drop ---
     function drag(ev) { ev.dataTransfer.setData("text", "src"); }
     function allowDrop(ev) { ev.preventDefault(); ev.target.classList.add('drag-over'); }
-    // Clean up drag hover
     document.addEventListener('dragleave', (e) => {
         if(e.target.classList.contains('slot')) e.target.classList.remove('drag-over');
     });
-
     function drop(ev) {
         ev.preventDefault();
         ev.target.classList.remove('drag-over');
         if(ev.target.classList.contains('slot') && finalImageURL) fillSlot(ev.target);
     }
-
     function fillSlot(el) {
         el.style.backgroundImage = `url(${finalImageURL})`;
         el.classList.add('filled');
     }
-
     function fillGrid() {
         if(!finalImageURL) return;
         document.querySelectorAll('.slot').forEach(s => fillSlot(s));
     }
-
     function resetGrid() {
         document.querySelectorAll('.slot').forEach(s => {
             s.style.backgroundImage = '';
