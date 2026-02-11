@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Passport Studio V7 (Stable)</title>
+    <title>Passport Studio V8 (Pro)</title>
     <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>📸</text></svg>">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.css">
@@ -15,10 +15,9 @@
             --bg: #f8fafc;
             --panel: #ffffff;
             --border: #cbd5e1;
-            /* Exact Size: 1.2" x 1.4" */
+            /* Exact Size: 1.2" x 1.4" (approx 30.5mm x 35.6mm) */
             --p-width: 30.48mm;
             --p-height: 35.56mm;
-            /* Tighter Gap for Safety */
             --gap: 1.5mm; 
         }
 
@@ -28,7 +27,6 @@
             margin: 0; display: flex; height: 100vh; overflow: hidden;
         }
 
-        /* Sidebar */
         .sidebar {
             width: 340px; background: var(--panel); padding: 15px;
             border-right: 1px solid var(--border);
@@ -62,7 +60,6 @@
         button.secondary { background: white; color: #333; border: 1px solid var(--border); }
         button.danger { background: #ef4444; color: white; }
 
-        /* Color Picker */
         .color-picker-wrapper {
             position: relative; width: 100%; height: 35px;
             border: 1px solid var(--border); border-radius: 6px;
@@ -78,7 +75,6 @@
             box-shadow: 0 2px 4px rgba(0,0,0,0.1); display: flex;
         }
 
-        /* Workspace */
         .workspace {
             flex: 1; background: #94a3b8; padding: 20px;
             display: flex; justify-content: center; align-items: flex-start; overflow: auto;
@@ -87,63 +83,63 @@
         #a4-sheet {
             width: 210mm; height: 297mm;
             background: white;
-            padding: 5mm; /* Safe Margin */
+            padding: 10mm;
             box-shadow: 0 0 20px rgba(0,0,0,0.3);
             box-sizing: border-box;
             
-            /* Grid: 6 cols x 7 rows = 42 Photos */
+            /* Improved Grid: Auto-fit prevents overflow */
             display: grid;
-            grid-template-columns: repeat(6, var(--p-width));
-            grid-template-rows: repeat(7, var(--p-height));
-            
-            justify-content: center; align-content: center;
+            grid-template-columns: repeat(auto-fill, var(--p-width));
+            grid-auto-rows: var(--p-height);
+            justify-content: center; 
             gap: var(--gap);
+            overflow: hidden; /* Strict A4 boundary */
         }
 
-        /* Slots */
         .slot {
             width: var(--p-width); height: var(--p-height);
             border: 1px dashed #e2e8f0; position: relative; background-color: #f8fafc;
         }
         
         .slot.filled {
-            border: 2px solid black; 
+            border: 1px solid #000; 
             background-size: cover; background-position: center; cursor: pointer;
         }
 
-        .slot.filled:hover::after {
-            content: ''; position: absolute; top:0; left:0; width:100%; height:100%;
-            background: rgba(255, 0, 0, 0.5);
-        }
         .slot.drag-over { border: 2px solid var(--primary); background: #dbeafe; }
 
-        /* Preview Source */
         #sourcePreview {
             width: 90px; height: 105px; background: #eee; border: 2px dashed #999;
             margin: 0 auto 10px auto; cursor: grab; background-size: cover;
             display: flex; align-items: center; justify-content: center; color: #aaa; font-size: 0.7rem;
         }
 
-        /* Log Area */
         #debugLog {
             font-family: monospace; font-size: 10px; color: #666; 
             background: #eee; padding: 5px; margin-top: 10px; 
             height: 60px; overflow-y: auto; border: 1px solid #ccc;
         }
 
-        /* Print */
+        /* --- PRINT IMPROVEMENTS --- */
         @media print {
+            @page { size: A4; margin: 0; }
             body { display: block; background: white; }
             .sidebar { display: none !important; }
-            .workspace { padding: 0; margin: 0; height: auto; background: white; }
+            .workspace { padding: 0; margin: 0; overflow: visible; }
             #a4-sheet {
-                box-shadow: none; margin: 0; width: 100%; height: 100%;
-                padding: 5mm; /* Maintain Safe Margin on Print */
-                print-color-adjust: exact; -webkit-print-color-adjust: exact;
-                border: none;
+                box-shadow: none; border: none;
+                width: 210mm; height: 297mm;
+                padding: 10mm;
             }
-            .slot { border: none; background: transparent; } 
-            .slot.filled { border: 2px solid black !important; }
+            /* HIDE EMPTY SLOTS COMPLETELY */
+            .slot:not(.filled) {
+                visibility: hidden;
+            }
+            .slot.filled {
+                border: 1px solid black !important;
+                -webkit-print-color-adjust: exact;
+                print-color-adjust: exact;
+            }
         }
 
         .crop-box { height: 200px; background: #333; margin-bottom: 10px; }
@@ -154,16 +150,16 @@
 <body>
 
     <div class="sidebar">
-        <h2>Passport Studio V7</h2>
+        <h2>Passport Studio V8</h2>
         
         <div class="control-group">
-            <label>⚙️ API Key (Remove.bg)</label>
+            <label>⚙️ API Key (Photoroom)</label>
             <div id="apiInputView">
-                <input type="text" id="apiKey" placeholder="Paste Key Here...">
+                <input type="text" id="apiKey" placeholder="Paste Photoroom Key...">
                 <button onclick="saveKey()">Save Key</button>
             </div>
             <div id="apiActiveView" class="hidden api-active">
-                <div style="color:green; font-weight:bold; font-size:0.8rem;">✅ Key Active</div>
+                <div style="color:green; font-weight:bold; font-size:0.8rem;">✅ API Active</div>
                 <button onclick="removeKey()" class="danger" style="padding:5px; margin-top:5px;">Remove Key</button>
             </div>
         </div>
@@ -180,9 +176,7 @@
             <label>Background Color</label>
             <div class="color-picker-wrapper">
                 <input type="color" id="bgColorPicker" value="#ffffff" onchange="setBg(this.value)">
-                <div class="picker-icon">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#333" stroke-width="2"><path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z"></path></svg>
-                </div>
+                <div class="picker-icon">🎨</div>
             </div>
 
             <div style="display:flex; gap:5px; margin-top:5px;">
@@ -192,10 +186,10 @@
 
             <hr style="border:0; border-top:1px solid #e2e8f0; margin:10px 0;">
 
-            <button onclick="runRemBg()" id="remBgBtn" style="background: linear-gradient(135deg, #6366f1, #8b5cf6);">
+            <button onclick="runRemBg()" id="remBgBtn" style="background: linear-gradient(135deg, #2563eb, #7c3aed);">
                 ✨ AI Remove BG
             </button>
-            <div id="loader" class="loader">Processing...</div>
+            <div id="loader" class="loader">Processing AI...</div>
             <button onclick="applyCrop()" class="secondary" style="margin-top:5px;">✂️ Apply Crop</button>
         </div>
 
@@ -203,17 +197,16 @@
             <label>3. Layout</label>
             <div id="sourcePreview" draggable="true" ondragstart="drag(event)">Src</div>
             
-            <button onclick="fillGrid()">Fill Page (42 Photos)</button>
+            <button onclick="fillGrid()">Fill Page</button>
             <button onclick="resetGrid()" class="danger" style="background:white; color:red; border:1px solid red;">Clear Sheet</button>
 
             <div style="margin-top:10px; border-top:1px solid #ddd; padding-top:10px;">
                 <label>Spacing: <span id="gapVal">1.5mm</span></label>
-                <input type="range" min="0" max="6" step="0.5" value="1.5" oninput="updateGap(this.value)">
+                <input type="range" min="0" max="10" step="0.5" value="1.5" oninput="updateGap(this.value)">
             </div>
         </div>
 
-        <button onclick="window.print()" style="margin-top:auto; padding: 15px; font-size: 1.1rem;">🖨️ PRINT</button>
-        
+        <button onclick="window.print()" style="margin-top:auto; padding: 15px; font-size: 1.1rem; background: #059669;">🖨️ PRINT SHEET</button>
         <div id="debugLog">System Ready.</div>
     </div>
 
@@ -222,9 +215,8 @@
     </div>
 
 <script>
-    // Config: 1.2" / 1.4"
     const ASPECT_RATIO = 1.2 / 1.4;
-    const TOTAL_SLOTS = 42; 
+    const MAX_SLOTS = 50; // Increased buffer
 
     let cropper = null;
     let finalImageURL = null;
@@ -234,7 +226,6 @@
         const el = document.getElementById('debugLog');
         el.innerText += '\n> ' + msg;
         el.scrollTop = el.scrollHeight;
-        console.log(msg);
     }
 
     window.onload = () => {
@@ -245,7 +236,7 @@
     function generateGrid() {
         const sheet = document.getElementById('a4-sheet');
         sheet.innerHTML = '';
-        for(let i=0; i<TOTAL_SLOTS; i++) {
+        for(let i=0; i<MAX_SLOTS; i++) {
             const slot = document.createElement('div');
             slot.className = 'slot';
             slot.ondragover = allowDrop;
@@ -260,9 +251,8 @@
         }
     }
 
-    // --- API ---
     function checkApiKey() {
-        const k = localStorage.getItem('rembg_api_key');
+        const k = localStorage.getItem('photoroom_api_key');
         if(k) {
             document.getElementById('apiInputView').classList.add('hidden');
             document.getElementById('apiActiveView').classList.remove('hidden');
@@ -271,21 +261,19 @@
             document.getElementById('apiActiveView').classList.add('hidden');
         }
     }
+
     function saveKey() {
         const k = document.getElementById('apiKey').value.trim();
         if(!k) return alert("Enter Key!");
-        localStorage.setItem('rembg_api_key', k);
+        localStorage.setItem('photoroom_api_key', k);
         checkApiKey();
-        log("API Key Saved");
-    }
-    function removeKey() {
-        localStorage.removeItem('rembg_api_key');
-        document.getElementById('apiKey').value = '';
-        checkApiKey();
-        log("API Key Removed");
     }
 
-    // --- Core Logic ---
+    function removeKey() {
+        localStorage.removeItem('photoroom_api_key');
+        checkApiKey();
+    }
+
     function updateGap(val) {
         document.documentElement.style.setProperty('--gap', val + 'mm');
         document.getElementById('gapVal').innerText = val + 'mm';
@@ -302,58 +290,43 @@
             cropper = new Cropper(document.getElementById('cropImg'), {
                 aspectRatio: ASPECT_RATIO, viewMode: 1
             });
-            log("Image Loaded");
         };
         reader.readAsDataURL(file);
     });
 
     function setBg(c) { 
         currentBg = c;
-        document.getElementById('bgColorPicker').value = c;
+        document.getElementById('bgColorPicker').value = (c==='white'?'#ffffff':c);
         if(finalImageURL) applyCrop();
     }
 
     async function runRemBg() {
-        const k = localStorage.getItem('rembg_api_key');
-        if(!k) { alert("Save API Key first!"); return; }
+        const k = localStorage.getItem('photoroom_api_key');
+        if(!k) return alert("Save Photoroom API Key first!");
         
         const loader = document.getElementById('loader');
         loader.style.display = 'block';
-        log("Sending to API...");
 
-        cropper.getCroppedCanvas({ width: 600 }).toBlob(async (blob) => {
+        cropper.getCroppedCanvas({ width: 800 }).toBlob(async (blob) => {
             const formData = new FormData();
             formData.append('image_file', blob);
-            formData.append('size', 'auto');
 
             try {
-                // Using AllOrigins Proxy to bypass CORS
-                const proxyUrl = 'https://api.allorigins.win/raw?url=';
-                const targetUrl = encodeURIComponent('https://api.remove.bg/v1.0/removebg');
-                
-                const res = await fetch(proxyUrl + targetUrl, {
+                // Photoroom API endpoint
+                const res = await fetch('https://sdk.photoroom.com/v1/segment', {
                     method: 'POST',
-                    headers: { 'X-Api-Key': k },
+                    headers: { 'x-api-key': k },
                     body: formData
                 });
 
-                if(!res.ok) {
-                    const txt = await res.text();
-                    log("API Error: " + res.status);
-                    if(res.status == 402) alert("Failed: No Credits left on this Key.");
-                    else if(res.status == 403) alert("Failed: Invalid API Key.");
-                    else alert("API Failed: " + res.status);
-                    throw new Error(res.status);
-                }
+                if(!res.ok) throw new Error("API Limit reached or Invalid Key");
 
                 const rBlob = await res.blob();
                 const url = URL.createObjectURL(rBlob);
                 cropper.replace(url);
                 log("Background Removed!");
-
             } catch(e) {
-                console.error(e);
-                log("Error: " + e.message);
+                alert(e.message);
             } finally {
                 loader.style.display = 'none';
             }
@@ -362,7 +335,7 @@
 
     function applyCrop() {
         if(!cropper) return;
-        const cvs = cropper.getCroppedCanvas({ width:600, imageSmoothingQuality:'high' });
+        const cvs = cropper.getCroppedCanvas({ width:600 });
         const finalCvs = document.createElement('canvas');
         finalCvs.width = cvs.width; finalCvs.height = cvs.height;
         const ctx = finalCvs.getContext('2d');
@@ -371,19 +344,15 @@
         ctx.fillRect(0,0, finalCvs.width, finalCvs.height);
         ctx.drawImage(cvs, 0, 0);
         
-        finalImageURL = finalCvs.toDataURL('image/jpeg', 0.95);
+        finalImageURL = finalCvs.toDataURL('image/jpeg', 0.9);
         document.getElementById('sourcePreview').style.backgroundImage = `url(${finalImageURL})`;
         document.getElementById('sourcePreview').innerText = '';
         document.getElementById('dragPanel').classList.remove('hidden');
-        log("Crop Applied");
+        log("Ready to layout");
     }
 
-    // --- Drag & Drop ---
     function drag(ev) { ev.dataTransfer.setData("text", "src"); }
     function allowDrop(ev) { ev.preventDefault(); ev.target.classList.add('drag-over'); }
-    document.addEventListener('dragleave', (e) => {
-        if(e.target.classList.contains('slot')) e.target.classList.remove('drag-over');
-    });
     function drop(ev) {
         ev.preventDefault();
         ev.target.classList.remove('drag-over');
