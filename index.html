@@ -320,46 +320,42 @@
         if(finalImageURL) applyCrop();
     }
 
-    // --- API REMOVE BG ---
+   // --- PERSONAL LOCAL SERVER ---
     async function runApiRemBg() {
-        const k = localStorage.getItem('rembg_api_key');
-        if(!k) { alert("Please Enter API Key first!"); return; }
-        
         const loader = document.getElementById('loader');
         const btn = document.getElementById('remBgBtn');
         
         btn.disabled = true;
         loader.style.display = 'block';
-        log("Sending to API...");
+        // log("Connecting to Local Server (localhost:8000)...");
+        log("Sending to Personal AI...");
 
-        // Get 600px width for API efficiency
-        cropper.getCroppedCanvas({ width: 600 }).toBlob(async (blob) => {
+        // Get High Quality Image from Cropper
+        cropper.getCroppedCanvas({ width: 800 }).toBlob(async (blob) => {
             const formData = new FormData();
-            formData.append('image_file', blob);
-            formData.append('size', 'auto');
+            formData.append('image_file', blob, "photo.png");
 
             try {
-                const res = await fetch('https://api.remove.bg/v1.0/removebg', {
+                // POINTING TO YOUR PYTHON SERVER
+                const res = await fetch('http://127.0.0.1:8000/removebg', {
                     method: 'POST',
-                    headers: { 'X-Api-Key': k },
                     body: formData
                 });
 
                 if(!res.ok) {
-                    if(res.status === 402) alert("API Limit Reached (Check Credits)");
-                    else if(res.status === 403) alert("Invalid API Key");
-                    else alert("API Error: " + res.status);
-                    throw new Error(res.statusText);
+                    alert("Server Error. Is python server.py running?");
+                    throw new Error("Server connection failed");
                 }
 
                 const rBlob = await res.blob();
                 const url = URL.createObjectURL(rBlob);
                 cropper.replace(url);
-                log("Background Removed!");
+                log("Background Removed (Unlimited Local AI)!");
 
             } catch(e) {
                 console.error(e);
-                log("Error: " + e.message);
+                log("Error: Is the python server running?");
+                alert("Connection Failed! \n1. Make sure 'server.py' is running in terminal.\n2. Check Console for errors.");
             } finally {
                 loader.style.display = 'none';
                 btn.disabled = false;
