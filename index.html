@@ -3,13 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Passport Studio V7 (Local AI)</title>
+    <title>Passport Studio V7 (Stable)</title>
     <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>📸</text></svg>">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.css">
-    
     <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@imgly/background-removal@1.0.4/dist/imgly-background-removal.min.js"></script>
 
     <style>
         :root {
@@ -17,10 +15,10 @@
             --bg: #f8fafc;
             --panel: #ffffff;
             --border: #cbd5e1;
-            /* Standard Passport Size: 35mm x 45mm or 1.2" x 1.4" approx */
+            /* Standard Passport Size: 35mm x 45mm */
             --p-width: 30.48mm; 
             --p-height: 35.56mm;
-            /* Auto-calculated gap to fit A4 width (210mm) with margins */
+            /* Auto-calculated gap for A4 */
             --gap: 1.5mm; 
         }
 
@@ -61,7 +59,6 @@
             display: flex; align-items: center; justify-content: center; gap: 5px;
         }
         button:hover { opacity: 0.9; transform: translateY(-1px); }
-        button:disabled { background: #94a3b8; cursor: not-allowed; transform: none; }
         button.secondary { background: white; color: #333; border: 1px solid var(--border); }
         button.danger { background: #ef4444; color: white; }
 
@@ -85,7 +82,7 @@
         #a4-sheet {
             width: 210mm; height: 297mm;
             background: white;
-            padding: 10mm; /* Increased safe margin for printers */
+            padding: 10mm; /* Safe print margin */
             box-shadow: 0 0 20px rgba(0,0,0,0.3);
             box-sizing: border-box;
             
@@ -94,7 +91,6 @@
             grid-template-columns: repeat(6, var(--p-width));
             grid-template-rows: repeat(7, var(--p-height));
             
-            /* Center Grid exactly */
             justify-content: center; 
             align-content: start;
             gap: var(--gap);
@@ -108,7 +104,7 @@
         }
         
         .slot.filled {
-            border: 1px solid #cbd5e1; /* Light grey border for cutting guide */
+            border: 1px solid #cbd5e1;
             background-size: cover; background-position: center; cursor: pointer;
         }
 
@@ -135,18 +131,18 @@
             height: 60px; overflow-y: auto; border: 1px solid #ccc;
         }
 
-        /* Print - CLEAN MODE */
+        /* --- PRINT CLEAN MODE --- */
         @media print {
             body { display: block; background: white; }
             .sidebar { display: none !important; }
             .workspace { padding: 0; margin: 0; height: auto; background: white; overflow: visible; }
             #a4-sheet {
                 box-shadow: none; margin: 0; width: 100%; height: 100%;
-                padding: 10mm; /* Keep margins */
+                padding: 10mm; 
                 border: none;
-                gap: var(--gap); /* Keep user selected gap */
+                gap: var(--gap);
             }
-            /* HIDE EMPTY SLOTS */
+            /* HIDE EMPTY SLOTS COMPLETELY */
             .slot { border: none !important; background: transparent !important; } 
             /* SHOW FILLED ONLY */
             .slot.filled { 
@@ -158,13 +154,29 @@
 
         .crop-box { height: 200px; background: #333; margin-bottom: 10px; border-radius: 4px; overflow: hidden;}
         .loader { display:none; color: var(--primary); font-size: 0.75rem; text-align: center; margin-top:5px; padding: 5px; background: #e0f2fe; border-radius: 4px;}
+        .api-active { background: #dcfce7; border: 1px solid #86efac; padding: 10px; border-radius: 6px; }
     </style>
 </head>
 <body>
 
     <div class="sidebar">
-        <h2>Passport Studio V7 <span style="font-size:0.7em; color:green; background:#dcfce7; padding:2px 5px; border-radius:4px;">Local AI</span></h2>
+        <h2>Passport Studio V7</h2>
         
+        <div class="control-group">
+            <label>⚙️ Remove.bg API Key</label>
+            <div id="apiInputView">
+                <input type="text" id="apiKey" placeholder="Paste Key Here...">
+                <button onclick="saveKey()">Save Key</button>
+                <div style="font-size:10px; color:#666; margin-top:5px;">
+                    Get free key at <a href="https://www.remove.bg/api" target="_blank">remove.bg/api</a>
+                </div>
+            </div>
+            <div id="apiActiveView" class="hidden api-active">
+                <div style="color:green; font-weight:bold; font-size:0.8rem;">✅ Key Active</div>
+                <button onclick="removeKey()" class="danger" style="padding:5px; margin-top:5px;">Remove Key</button>
+            </div>
+        </div>
+
         <div class="control-group">
             <label>1. Upload Photo</label>
             <input type="file" id="imgInput" accept="image/*">
@@ -186,10 +198,10 @@
 
             <hr style="border:0; border-top:1px solid #e2e8f0; margin:10px 0;">
 
-            <button onclick="runLocalRemBg()" id="remBgBtn" style="background: linear-gradient(135deg, #6366f1, #8b5cf6);">
-                ✨ AI Remove BG (Free)
+            <button onclick="runApiRemBg()" id="remBgBtn" style="background: linear-gradient(135deg, #6366f1, #8b5cf6);">
+                ✨ AI Remove BG
             </button>
-            <div id="loader" class="loader">Loading AI Model (First run takes time)...</div>
+            <div id="loader" class="loader">Processing (Sending to API)...</div>
             
             <button onclick="applyCrop()" class="secondary" style="margin-top:5px;">✂️ Apply Crop</button>
         </div>
@@ -219,7 +231,7 @@
     </div>
 
 <script>
-    // Config: Passport Size 35mm x 45mm (approx)
+    // Config: Passport Size 35mm x 45mm
     const ASPECT_RATIO = 30.48 / 35.56; 
     const TOTAL_SLOTS = 42; 
 
@@ -233,6 +245,7 @@
     }
 
     window.onload = () => {
+        checkApiKey();
         generateGrid();
     };
 
@@ -252,6 +265,31 @@
             };
             sheet.appendChild(slot);
         }
+    }
+
+    // --- API KEY MANAGMENT ---
+    function checkApiKey() {
+        const k = localStorage.getItem('rembg_api_key');
+        if(k) {
+            document.getElementById('apiInputView').classList.add('hidden');
+            document.getElementById('apiActiveView').classList.remove('hidden');
+        } else {
+            document.getElementById('apiInputView').classList.remove('hidden');
+            document.getElementById('apiActiveView').classList.add('hidden');
+        }
+    }
+    function saveKey() {
+        const k = document.getElementById('apiKey').value.trim();
+        if(!k) return alert("Enter Key!");
+        localStorage.setItem('rembg_api_key', k);
+        checkApiKey();
+        log("API Key Saved");
+    }
+    function removeKey() {
+        localStorage.removeItem('rembg_api_key');
+        document.getElementById('apiKey').value = '';
+        checkApiKey();
+        log("API Key Removed");
     }
 
     // --- Core Logic ---
@@ -282,35 +320,51 @@
         if(finalImageURL) applyCrop();
     }
 
-    // --- NEW LOCAL AI REMOVE BG ---
-    async function runLocalRemBg() {
-        const btn = document.getElementById('remBgBtn');
+    // --- API REMOVE BG ---
+    async function runApiRemBg() {
+        const k = localStorage.getItem('rembg_api_key');
+        if(!k) { alert("Please Enter API Key first!"); return; }
+        
         const loader = document.getElementById('loader');
+        const btn = document.getElementById('remBgBtn');
         
         btn.disabled = true;
         loader.style.display = 'block';
-        log("Loading AI Model (this is free)...");
+        log("Sending to API...");
 
-        try {
-            // Get original image blob from cropper
-            // We use the full image for better context, not just the crop
-            // But to save memory, we can use the cropper's current data
-            const imageSrc = document.getElementById('cropImg').src;
+        // Get 600px width for API efficiency
+        cropper.getCroppedCanvas({ width: 600 }).toBlob(async (blob) => {
+            const formData = new FormData();
+            formData.append('image_file', blob);
+            formData.append('size', 'auto');
 
-            // Run imgly
-            const blob = await imglyRemoveBackground(imageSrc);
-            
-            const url = URL.createObjectURL(blob);
-            cropper.replace(url);
-            log("Background Removed Successfully!");
-        } catch(e) {
-            console.error(e);
-            alert("Error removing background. Check console.");
-            log("Error: " + e.message);
-        } finally {
-            loader.style.display = 'none';
-            btn.disabled = false;
-        }
+            try {
+                const res = await fetch('https://api.remove.bg/v1.0/removebg', {
+                    method: 'POST',
+                    headers: { 'X-Api-Key': k },
+                    body: formData
+                });
+
+                if(!res.ok) {
+                    if(res.status === 402) alert("API Limit Reached (Check Credits)");
+                    else if(res.status === 403) alert("Invalid API Key");
+                    else alert("API Error: " + res.status);
+                    throw new Error(res.statusText);
+                }
+
+                const rBlob = await res.blob();
+                const url = URL.createObjectURL(rBlob);
+                cropper.replace(url);
+                log("Background Removed!");
+
+            } catch(e) {
+                console.error(e);
+                log("Error: " + e.message);
+            } finally {
+                loader.style.display = 'none';
+                btn.disabled = false;
+            }
+        });
     }
 
     function applyCrop() {
