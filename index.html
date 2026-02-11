@@ -3,11 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Passport Studio V8 (Pro)</title>
+    <title>Passport Studio V7 (Local AI)</title>
     <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>📸</text></svg>">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.css">
+    
     <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@imgly/background-removal@1.0.4/dist/imgly-background-removal.min.js"></script>
 
     <style>
         :root {
@@ -15,9 +17,10 @@
             --bg: #f8fafc;
             --panel: #ffffff;
             --border: #cbd5e1;
-            /* Exact Size: 1.2" x 1.4" (approx 30.5mm x 35.6mm) */
-            --p-width: 30.48mm;
+            /* Standard Passport Size: 35mm x 45mm or 1.2" x 1.4" approx */
+            --p-width: 30.48mm; 
             --p-height: 35.56mm;
+            /* Auto-calculated gap to fit A4 width (210mm) with margins */
             --gap: 1.5mm; 
         }
 
@@ -27,6 +30,7 @@
             margin: 0; display: flex; height: 100vh; overflow: hidden;
         }
 
+        /* Sidebar */
         .sidebar {
             width: 340px; background: var(--panel); padding: 15px;
             border-right: 1px solid var(--border);
@@ -35,7 +39,7 @@
             box-shadow: 2px 0 10px rgba(0,0,0,0.05);
         }
 
-        h2 { margin: 0; font-size: 1.1rem; padding-bottom: 8px; border-bottom: 1px solid var(--border); }
+        h2 { margin: 0; font-size: 1.1rem; padding-bottom: 8px; border-bottom: 1px solid var(--border); color: #1e293b; }
 
         .control-group {
             background: #f1f5f9; padding: 12px; border-radius: 8px; border: 1px solid var(--border);
@@ -56,10 +60,12 @@
             margin-bottom: 5px; transition: 0.2s; font-size: 0.85rem;
             display: flex; align-items: center; justify-content: center; gap: 5px;
         }
-        button:hover { opacity: 0.9; }
+        button:hover { opacity: 0.9; transform: translateY(-1px); }
+        button:disabled { background: #94a3b8; cursor: not-allowed; transform: none; }
         button.secondary { background: white; color: #333; border: 1px solid var(--border); }
         button.danger { background: #ef4444; color: white; }
 
+        /* Color Picker */
         .color-picker-wrapper {
             position: relative; width: 100%; height: 35px;
             border: 1px solid var(--border); border-radius: 6px;
@@ -69,12 +75,8 @@
             position: absolute; top: -50%; left: -50%; width: 200%; height: 200%;
             padding: 0; border: none; cursor: pointer;
         }
-        .picker-icon {
-            position: absolute; right: 10px; top: 50%; transform: translateY(-50%);
-            pointer-events: none; background: white; padding: 4px; border-radius: 50%;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1); display: flex;
-        }
 
+        /* Workspace */
         .workspace {
             flex: 1; background: #94a3b8; padding: 20px;
             display: flex; justify-content: center; align-items: flex-start; overflow: auto;
@@ -83,130 +85,132 @@
         #a4-sheet {
             width: 210mm; height: 297mm;
             background: white;
-            padding: 10mm;
+            padding: 10mm; /* Increased safe margin for printers */
             box-shadow: 0 0 20px rgba(0,0,0,0.3);
             box-sizing: border-box;
             
-            /* Improved Grid: Auto-fit prevents overflow */
+            /* Grid: 6 cols x 7 rows = 42 Photos */
             display: grid;
-            grid-template-columns: repeat(auto-fill, var(--p-width));
-            grid-auto-rows: var(--p-height);
+            grid-template-columns: repeat(6, var(--p-width));
+            grid-template-rows: repeat(7, var(--p-height));
+            
+            /* Center Grid exactly */
             justify-content: center; 
+            align-content: start;
             gap: var(--gap);
-            overflow: hidden; /* Strict A4 boundary */
         }
 
+        /* Slots */
         .slot {
             width: var(--p-width); height: var(--p-height);
             border: 1px dashed #e2e8f0; position: relative; background-color: #f8fafc;
+            border-radius: 2px;
         }
         
         .slot.filled {
-            border: 1px solid #000; 
+            border: 1px solid #cbd5e1; /* Light grey border for cutting guide */
             background-size: cover; background-position: center; cursor: pointer;
         }
 
+        .slot.filled:hover::after {
+            content: '×'; display: flex; align-items: center; justify-content: center;
+            font-size: 20px; color: white;
+            position: absolute; top:0; left:0; width:100%; height:100%;
+            background: rgba(239, 68, 68, 0.6);
+        }
         .slot.drag-over { border: 2px solid var(--primary); background: #dbeafe; }
 
+        /* Preview Source */
         #sourcePreview {
             width: 90px; height: 105px; background: #eee; border: 2px dashed #999;
             margin: 0 auto 10px auto; cursor: grab; background-size: cover;
             display: flex; align-items: center; justify-content: center; color: #aaa; font-size: 0.7rem;
+            border-radius: 4px;
         }
 
+        /* Log Area */
         #debugLog {
             font-family: monospace; font-size: 10px; color: #666; 
             background: #eee; padding: 5px; margin-top: 10px; 
             height: 60px; overflow-y: auto; border: 1px solid #ccc;
         }
 
-        /* --- PRINT IMPROVEMENTS --- */
+        /* Print - CLEAN MODE */
         @media print {
-            @page { size: A4; margin: 0; }
             body { display: block; background: white; }
             .sidebar { display: none !important; }
-            .workspace { padding: 0; margin: 0; overflow: visible; }
+            .workspace { padding: 0; margin: 0; height: auto; background: white; overflow: visible; }
             #a4-sheet {
-                box-shadow: none; border: none;
-                width: 210mm; height: 297mm;
-                padding: 10mm;
+                box-shadow: none; margin: 0; width: 100%; height: 100%;
+                padding: 10mm; /* Keep margins */
+                border: none;
+                gap: var(--gap); /* Keep user selected gap */
             }
-            /* HIDE EMPTY SLOTS COMPLETELY */
-            .slot:not(.filled) {
-                visibility: hidden;
-            }
-            .slot.filled {
-                border: 1px solid black !important;
+            /* HIDE EMPTY SLOTS */
+            .slot { border: none !important; background: transparent !important; } 
+            /* SHOW FILLED ONLY */
+            .slot.filled { 
+                border: 1px solid #000 !important; /* Thin black line for cutting */
                 -webkit-print-color-adjust: exact;
                 print-color-adjust: exact;
             }
         }
 
-        .crop-box { height: 200px; background: #333; margin-bottom: 10px; }
-        .loader { display:none; color: var(--primary); font-size: 0.75rem; text-align: center; margin-top:5px; }
-        .api-active { background: #dcfce7; border: 1px solid #86efac; padding: 10px; border-radius: 6px; }
+        .crop-box { height: 200px; background: #333; margin-bottom: 10px; border-radius: 4px; overflow: hidden;}
+        .loader { display:none; color: var(--primary); font-size: 0.75rem; text-align: center; margin-top:5px; padding: 5px; background: #e0f2fe; border-radius: 4px;}
     </style>
 </head>
 <body>
 
     <div class="sidebar">
-        <h2>Passport Studio V8</h2>
+        <h2>Passport Studio V7 <span style="font-size:0.7em; color:green; background:#dcfce7; padding:2px 5px; border-radius:4px;">Local AI</span></h2>
         
         <div class="control-group">
-            <label>⚙️ API Key (Photoroom)</label>
-            <div id="apiInputView">
-                <input type="text" id="apiKey" placeholder="Paste Photoroom Key...">
-                <button onclick="saveKey()">Save Key</button>
-            </div>
-            <div id="apiActiveView" class="hidden api-active">
-                <div style="color:green; font-weight:bold; font-size:0.8rem;">✅ API Active</div>
-                <button onclick="removeKey()" class="danger" style="padding:5px; margin-top:5px;">Remove Key</button>
-            </div>
-        </div>
-
-        <div class="control-group">
-            <label>1. Upload</label>
+            <label>1. Upload Photo</label>
             <input type="file" id="imgInput" accept="image/*">
         </div>
 
         <div id="editorPanel" class="control-group hidden">
-            <label>2. Crop & Edit</label>
+            <label>2. Edit</label>
             <div class="crop-box"><img id="cropImg" src=""></div>
             
-            <label>Background Color</label>
+            <label>Background</label>
             <div class="color-picker-wrapper">
                 <input type="color" id="bgColorPicker" value="#ffffff" onchange="setBg(this.value)">
-                <div class="picker-icon">🎨</div>
             </div>
-
             <div style="display:flex; gap:5px; margin-top:5px;">
                 <button onclick="setBg('white')" class="secondary">White</button>
                 <button onclick="setBg('#3b82f6')" class="secondary" style="color:#3b82f6">Blue</button>
+                <button onclick="setBg('#ef4444')" class="secondary" style="color:#ef4444">Red</button>
             </div>
 
             <hr style="border:0; border-top:1px solid #e2e8f0; margin:10px 0;">
 
-            <button onclick="runRemBg()" id="remBgBtn" style="background: linear-gradient(135deg, #2563eb, #7c3aed);">
-                ✨ AI Remove BG
+            <button onclick="runLocalRemBg()" id="remBgBtn" style="background: linear-gradient(135deg, #6366f1, #8b5cf6);">
+                ✨ AI Remove BG (Free)
             </button>
-            <div id="loader" class="loader">Processing AI...</div>
+            <div id="loader" class="loader">Loading AI Model (First run takes time)...</div>
+            
             <button onclick="applyCrop()" class="secondary" style="margin-top:5px;">✂️ Apply Crop</button>
         </div>
 
         <div id="dragPanel" class="control-group hidden">
             <label>3. Layout</label>
-            <div id="sourcePreview" draggable="true" ondragstart="drag(event)">Src</div>
+            <div id="sourcePreview" draggable="true" ondragstart="drag(event)">Drag Me</div>
             
-            <button onclick="fillGrid()">Fill Page</button>
-            <button onclick="resetGrid()" class="danger" style="background:white; color:red; border:1px solid red;">Clear Sheet</button>
+            <div style="display:grid; grid-template-columns: 1fr 1fr; gap:5px;">
+                <button onclick="fillGrid()">Fill All</button>
+                <button onclick="resetGrid()" class="danger">Clear</button>
+            </div>
 
             <div style="margin-top:10px; border-top:1px solid #ddd; padding-top:10px;">
-                <label>Spacing: <span id="gapVal">1.5mm</span></label>
-                <input type="range" min="0" max="10" step="0.5" value="1.5" oninput="updateGap(this.value)">
+                <label>Gap: <span id="gapVal">1.5mm</span></label>
+                <input type="range" min="0" max="4" step="0.5" value="1.5" oninput="updateGap(this.value)">
             </div>
         </div>
 
-        <button onclick="window.print()" style="margin-top:auto; padding: 15px; font-size: 1.1rem; background: #059669;">🖨️ PRINT SHEET</button>
+        <button onclick="window.print()" style="margin-top:auto; padding: 15px; font-size: 1.1rem; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);">🖨️ PRINT SHEET</button>
+        
         <div id="debugLog">System Ready.</div>
     </div>
 
@@ -215,8 +219,9 @@
     </div>
 
 <script>
-    const ASPECT_RATIO = 1.2 / 1.4;
-    const MAX_SLOTS = 50; // Increased buffer
+    // Config: Passport Size 35mm x 45mm (approx)
+    const ASPECT_RATIO = 30.48 / 35.56; 
+    const TOTAL_SLOTS = 42; 
 
     let cropper = null;
     let finalImageURL = null;
@@ -224,19 +229,17 @@
 
     function log(msg) {
         const el = document.getElementById('debugLog');
-        el.innerText += '\n> ' + msg;
-        el.scrollTop = el.scrollHeight;
+        el.innerText = '> ' + msg + '\n' + el.innerText.substring(0, 100);
     }
 
     window.onload = () => {
-        checkApiKey();
         generateGrid();
     };
 
     function generateGrid() {
         const sheet = document.getElementById('a4-sheet');
         sheet.innerHTML = '';
-        for(let i=0; i<MAX_SLOTS; i++) {
+        for(let i=0; i<TOTAL_SLOTS; i++) {
             const slot = document.createElement('div');
             slot.className = 'slot';
             slot.ondragover = allowDrop;
@@ -251,29 +254,7 @@
         }
     }
 
-    function checkApiKey() {
-        const k = localStorage.getItem('photoroom_api_key');
-        if(k) {
-            document.getElementById('apiInputView').classList.add('hidden');
-            document.getElementById('apiActiveView').classList.remove('hidden');
-        } else {
-            document.getElementById('apiInputView').classList.remove('hidden');
-            document.getElementById('apiActiveView').classList.add('hidden');
-        }
-    }
-
-    function saveKey() {
-        const k = document.getElementById('apiKey').value.trim();
-        if(!k) return alert("Enter Key!");
-        localStorage.setItem('photoroom_api_key', k);
-        checkApiKey();
-    }
-
-    function removeKey() {
-        localStorage.removeItem('photoroom_api_key');
-        checkApiKey();
-    }
-
+    // --- Core Logic ---
     function updateGap(val) {
         document.documentElement.style.setProperty('--gap', val + 'mm');
         document.getElementById('gapVal').innerText = val + 'mm';
@@ -290,69 +271,75 @@
             cropper = new Cropper(document.getElementById('cropImg'), {
                 aspectRatio: ASPECT_RATIO, viewMode: 1
             });
+            log("Image Loaded");
         };
         reader.readAsDataURL(file);
     });
 
     function setBg(c) { 
         currentBg = c;
-        document.getElementById('bgColorPicker').value = (c==='white'?'#ffffff':c);
+        document.getElementById('bgColorPicker').value = c;
         if(finalImageURL) applyCrop();
     }
 
-    async function runRemBg() {
-        const k = localStorage.getItem('photoroom_api_key');
-        if(!k) return alert("Save Photoroom API Key first!");
-        
+    // --- NEW LOCAL AI REMOVE BG ---
+    async function runLocalRemBg() {
+        const btn = document.getElementById('remBgBtn');
         const loader = document.getElementById('loader');
+        
+        btn.disabled = true;
         loader.style.display = 'block';
+        log("Loading AI Model (this is free)...");
 
-        cropper.getCroppedCanvas({ width: 800 }).toBlob(async (blob) => {
-            const formData = new FormData();
-            formData.append('image_file', blob);
+        try {
+            // Get original image blob from cropper
+            // We use the full image for better context, not just the crop
+            // But to save memory, we can use the cropper's current data
+            const imageSrc = document.getElementById('cropImg').src;
 
-            try {
-                // Photoroom API endpoint
-                const res = await fetch('https://sdk.photoroom.com/v1/segment', {
-                    method: 'POST',
-                    headers: { 'x-api-key': k },
-                    body: formData
-                });
-
-                if(!res.ok) throw new Error("API Limit reached or Invalid Key");
-
-                const rBlob = await res.blob();
-                const url = URL.createObjectURL(rBlob);
-                cropper.replace(url);
-                log("Background Removed!");
-            } catch(e) {
-                alert(e.message);
-            } finally {
-                loader.style.display = 'none';
-            }
-        });
+            // Run imgly
+            const blob = await imglyRemoveBackground(imageSrc);
+            
+            const url = URL.createObjectURL(blob);
+            cropper.replace(url);
+            log("Background Removed Successfully!");
+        } catch(e) {
+            console.error(e);
+            alert("Error removing background. Check console.");
+            log("Error: " + e.message);
+        } finally {
+            loader.style.display = 'none';
+            btn.disabled = false;
+        }
     }
 
     function applyCrop() {
         if(!cropper) return;
-        const cvs = cropper.getCroppedCanvas({ width:600 });
+        // High quality export
+        const cvs = cropper.getCroppedCanvas({ width:600, imageSmoothingQuality:'high' });
         const finalCvs = document.createElement('canvas');
         finalCvs.width = cvs.width; finalCvs.height = cvs.height;
         const ctx = finalCvs.getContext('2d');
         
+        // Draw BG
         ctx.fillStyle = currentBg;
         ctx.fillRect(0,0, finalCvs.width, finalCvs.height);
+        // Draw Image
         ctx.drawImage(cvs, 0, 0);
         
-        finalImageURL = finalCvs.toDataURL('image/jpeg', 0.9);
+        finalImageURL = finalCvs.toDataURL('image/jpeg', 0.95);
         document.getElementById('sourcePreview').style.backgroundImage = `url(${finalImageURL})`;
         document.getElementById('sourcePreview').innerText = '';
         document.getElementById('dragPanel').classList.remove('hidden');
-        log("Ready to layout");
+        log("Crop Applied. Ready to Layout.");
     }
 
+    // --- Drag & Drop ---
     function drag(ev) { ev.dataTransfer.setData("text", "src"); }
     function allowDrop(ev) { ev.preventDefault(); ev.target.classList.add('drag-over'); }
+    document.addEventListener('dragleave', (e) => {
+        if(e.target.classList.contains('slot')) e.target.classList.remove('drag-over');
+    });
     function drop(ev) {
         ev.preventDefault();
         ev.target.classList.remove('drag-over');
