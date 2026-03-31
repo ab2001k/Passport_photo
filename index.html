@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Passport Studio (ClipDrop V7.3)</title>
+    <title>Passport Studio (Remove.bg V7.4)</title>
     <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>📸</text></svg>">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.css">
@@ -23,6 +23,7 @@
 
         body { font-family: 'Inter', sans-serif; background: var(--bg); margin: 0; display: flex; height: 100vh; overflow: hidden; }
 
+        /* Sidebar */
         .sidebar {
             width: 340px; background: var(--panel); padding: 15px;
             border-right: 1px solid var(--border);
@@ -59,6 +60,7 @@
         }
         input[type="color"] { position: absolute; top: -50%; left: -50%; width: 200%; height: 200%; padding: 0; border: none; cursor: pointer; }
 
+        /* Workspace */
         .workspace { flex: 1; background: #94a3b8; padding: 20px; display: flex; justify-content: center; align-items: flex-start; overflow: auto; }
 
         #a4-sheet {
@@ -72,9 +74,12 @@
             row-gap: var(--gap-y);
         }
 
-        .slot { width: var(--p-width); height: var(--p-height); border: 1px dashed #e2e8f0; position: relative; background-color: #f8fafc; border-radius: 2px; }
-        .slot.filled { border: 1px solid #cbd5e1; background-size: cover; background-position: center; cursor: pointer; }
-        .slot.filled:hover::after { content: '×'; display: flex; align-items: center; justify-content: center; font-size: 20px; color: white; position: absolute; top:0; left:0; width:100%; height:100%; background: rgba(239, 68, 68, 0.6); }
+        /* Slots - Updated for HTML <img> printing */
+        .slot { width: var(--p-width); height: var(--p-height); border: 1px dashed #e2e8f0; position: relative; background-color: #f8fafc; border-radius: 2px; overflow: hidden; }
+        .slot img { width: 100%; height: 100%; object-fit: cover; display: block; -webkit-print-color-adjust: exact; print-color-adjust: exact; pointer-events: none; }
+        .slot.filled { border: 1px solid #cbd5e1; cursor: pointer; }
+        .slot.filled::after { content: '×'; display: flex; align-items: center; justify-content: center; font-size: 24px; color: white; position: absolute; top:0; left:0; width:100%; height:100%; background: rgba(239, 68, 68, 0.8); opacity: 0; transition: opacity 0.2s; }
+        .slot.filled:hover::after { opacity: 1; }
         .slot.drag-over { border: 2px solid var(--primary); background: #dbeafe; }
 
         #sourcePreview {
@@ -85,40 +90,38 @@
 
         #debugLog { font-family: monospace; font-size: 10px; color: #666; background: #eee; padding: 5px; margin-top: 10px; height: 60px; overflow-y: auto; border: 1px solid #ccc; }
 
+        /* PRINT CLEAN MODE - strictly guarantees images print and empty slots vanish */
         @media print {
             body { display: block; background: white; }
             .sidebar { display: none !important; }
             .workspace { padding: 0; margin: 0; height: auto; background: white; overflow: visible; }
             #a4-sheet { 
                 box-shadow: none; margin: 0 auto; width: 100%; height: 100%; 
-                padding: 0; 
-                border: none; 
-                column-gap: var(--gap-x);
-                row-gap: var(--gap-y);
-                align-content: center;
-                justify-content: center;
+                padding: 0; border: none; 
+                column-gap: var(--gap-x); row-gap: var(--gap-y);
+                align-content: center; justify-content: center;
             }
+            /* Completely hide styling for empty slots to save ink */
             .slot { border: none !important; background: transparent !important; } 
-            .slot.filled { 
-                border: none !important; 
-                -webkit-print-color-adjust: exact;
-                print-color-adjust: exact;
-            }
+            .slot.filled { border: none !important; }
+            .slot.filled::after { display: none !important; } /* Ensure delete overlay never prints */
+            /* Force images to print */
+            img { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
         }
 
         .crop-box { height: 200px; background: #333; margin-bottom: 10px; border-radius: 4px; overflow: hidden;}
         .loader { display:none; color: #0284c7; font-size: 0.75rem; text-align: center; margin-top:5px; padding: 5px; background: #e0f2fe; border-radius: 4px;}
-        .server-badge { background:#e0f2fe; color:#0369a1; padding:4px 8px; border-radius:4px; font-size:0.75rem; font-weight:bold; display:flex; align-items:center; gap:5px; border:1px solid #bae6fd; }
+        .server-badge { background:#ede9fe; color:#5b21b6; padding:4px 8px; border-radius:4px; font-size:0.75rem; font-weight:bold; display:flex; align-items:center; gap:5px; border:1px solid #ddd6fe; }
     </style>
 </head>
 <body>
 
     <div class="sidebar">
-        <h2>Passport Studio <span style="font-size:0.7em; color:white; background:#0284c7; padding:2px 5px; border-radius:4px;">CLOUD</span></h2>
+        <h2>Passport Studio <span style="font-size:0.7em; color:white; background:#8b5cf6; padding:2px 5px; border-radius:4px;">PRO</span></h2>
         
         <div class="server-badge">
-            <div style="width:8px; height:8px; background:#0ea5e9; border-radius:50%;"></div>
-            Mode: ClipDrop API 
+            <div style="width:8px; height:8px; background:#8b5cf6; border-radius:50%;"></div>
+            API: remove.bg (Free Preview)
         </div>
 
         <div class="control-group">
@@ -142,10 +145,10 @@
 
             <hr style="border:0; border-top:1px solid #e2e8f0; margin:10px 0;">
 
-            <button onclick="runCloudRemBg()" id="remBgBtn" style="background: linear-gradient(135deg, #0ea5e9, #0284c7);">
-                ⚡ AI Remove BG (ClipDrop)
+            <button onclick="runCloudRemBg()" id="remBgBtn" style="background: linear-gradient(135deg, #8b5cf6, #6d28d9);">
+                ✨ AI Remove BG (remove.bg)
             </button>
-            <div id="loader" class="loader">Uploading to ClipDrop...</div>
+            <div id="loader" class="loader">Uploading...</div>
             
             <button onclick="applyCrop()" class="secondary" style="margin-top:5px;">✂️ Apply Crop</button>
         </div>
@@ -179,7 +182,9 @@
     let cropper = null;
     let finalImageURL = null;
     let currentBg = 'white';
-    const CLIPDROP_API_KEY = 'q3GpV8AqvRVHDGkeg3uOvibOTvx2';
+    
+    // REMOVE.BG API Key
+    const REMOVE_BG_API_KEY = 'WLnc38yTvP4DcfmTBXHt8QfS';
 
     function log(msg) {
         const el = document.getElementById('debugLog');
@@ -198,7 +203,7 @@
             slot.ondrop = drop;
             slot.onclick = function() { 
                 if(this.classList.contains('filled')) {
-                    this.style.backgroundImage = '';
+                    this.innerHTML = ''; // Remove img tag
                     this.classList.remove('filled');
                 } else if(finalImageURL) fillSlot(this);
             };
@@ -207,10 +212,7 @@
     }
 
     document.getElementById('imgInput').addEventListener('change', function(e) {
-        if(cropper) {
-            cropper.destroy();
-            cropper = null;
-        }
+        if(cropper) { cropper.destroy(); cropper = null; }
         document.getElementById('cropImg').src = '';
         document.getElementById('editorPanel').classList.add('hidden');
 
@@ -234,49 +236,49 @@
         if(finalImageURL) applyCrop();
     }
 
-    // --- CLIPDROP API CONNECT ---
+    // --- REMOVE.BG API CONNECT ---
     async function runCloudRemBg() {
         const loader = document.getElementById('loader');
         const btn = document.getElementById('remBgBtn');
         
         btn.disabled = true;
         loader.style.display = 'block';
-        log("Sending to ClipDrop API...");
+        loader.innerText = "Connecting to remove.bg...";
+        log("Sending request to remove.bg...");
 
-        // Use lowest possible resolution (width: 300) to save bandwidth and speed up
-        cropper.getCroppedCanvas({ width: 300 }).toBlob(async (blob) => {
+        cropper.getCroppedCanvas({ width: 600 }).toBlob(async (blob) => {
             const formData = new FormData();
-            formData.append('image_file', blob, "photo.jpg"); // Sent as small jpeg
+            formData.append('image_file', blob, "photo.jpg");
+            formData.append('size', 'preview'); // Forces free preview mode
 
             try {
-                const res = await fetch('https://clipdrop-api.co/remove-background/v1', {
+                const res = await fetch('https://api.remove.bg/v1.0/removebg', {
                     method: 'POST',
-                    headers: {
-                        'x-api-key': CLIPDROP_API_KEY
-                    },
+                    headers: { 'X-Api-Key': REMOVE_BG_API_KEY },
                     body: formData
                 });
 
                 if(!res.ok) {
                     const err = await res.json().catch(() => ({}));
-                    throw new Error(err.error || `HTTP Error ${res.status}`);
+                    const errorMsg = err.errors ? err.errors[0].title : `HTTP Error ${res.status}`;
+                    throw new Error(errorMsg);
                 }
 
                 // Receive Transparent PNG from API
                 const rBlob = await res.blob();
                 const url = URL.createObjectURL(rBlob);
                 cropper.replace(url);
-                log("Background Removed (ClipDrop Success)!");
+                log("Background Removed (remove.bg Success)!");
 
             } catch(e) {
                 console.error(e);
-                alert("ClipDrop Connection Failed! \n\nCheck your API limits or console for details.");
+                alert("remove.bg Error: " + e.message);
                 log("Error: " + e.message);
             } finally {
                 loader.style.display = 'none';
                 btn.disabled = false;
             }
-        }, 'image/jpeg', 0.8); // 80% quality JPEG for lowest payload size
+        }, 'image/jpeg', 0.9);
     }
 
     function applyCrop() {
@@ -307,17 +309,20 @@
         ev.target.classList.remove('drag-over');
         if(ev.target.classList.contains('slot') && finalImageURL) fillSlot(ev.target);
     }
+    
+    // UPDATED: Injects an actual <img> tag to guarantee it prints
     function fillSlot(el) {
-        el.style.backgroundImage = `url(${finalImageURL})`;
+        el.innerHTML = `<img src="${finalImageURL}" alt="passport">`;
         el.classList.add('filled');
     }
+    
     function fillGrid() {
         if(!finalImageURL) return;
         document.querySelectorAll('.slot').forEach(s => fillSlot(s));
     }
     function resetGrid() {
         document.querySelectorAll('.slot').forEach(s => {
-            s.style.backgroundImage = '';
+            s.innerHTML = '';
             s.classList.remove('filled');
         });
     }
