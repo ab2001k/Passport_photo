@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Passport Studio (Offline V7.2)</title>
+    <title>Passport Studio (ClipDrop V7.3)</title>
     <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>📸</text></svg>">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.css">
@@ -17,14 +17,12 @@
             --border: #cbd5e1;
             --p-width: 30.48mm; 
             --p-height: 35.56mm;
-            /* NEW SPACING CONFIGURATION */
-            --gap-x: 2mm;  /* Tighter horizontal gap for print margins */
-            --gap-y: 6mm;  /* Increased vertical gap to fill top/bottom space */
+            --gap-x: 2mm; 
+            --gap-y: 6mm; 
         }
 
         body { font-family: 'Inter', sans-serif; background: var(--bg); margin: 0; display: flex; height: 100vh; overflow: hidden; }
 
-        /* Sidebar */
         .sidebar {
             width: 340px; background: var(--panel); padding: 15px;
             border-right: 1px solid var(--border);
@@ -54,7 +52,6 @@
         button.secondary { background: white; color: #333; border: 1px solid var(--border); }
         button.danger { background: #ef4444; color: white; }
 
-        /* Color Picker */
         .color-picker-wrapper {
             position: relative; width: 100%; height: 35px;
             border: 1px solid var(--border); border-radius: 6px;
@@ -62,23 +59,19 @@
         }
         input[type="color"] { position: absolute; top: -50%; left: -50%; width: 200%; height: 200%; padding: 0; border: none; cursor: pointer; }
 
-        /* Workspace */
         .workspace { flex: 1; background: #94a3b8; padding: 20px; display: flex; justify-content: center; align-items: flex-start; overflow: auto; }
 
         #a4-sheet {
             width: 210mm; height: 297mm; background: white; 
-            padding: 5mm; /* Reduced safe margin for screen view */
+            padding: 5mm; 
             box-shadow: 0 0 20px rgba(0,0,0,0.3); box-sizing: border-box;
             display: grid; grid-template-columns: repeat(6, var(--p-width)); grid-template-rows: repeat(7, var(--p-height));
             justify-content: center; 
-            /* Center vertically to utilize top/bottom space */
             align-content: center; 
-            /* Apply separate gaps */
             column-gap: var(--gap-x);
             row-gap: var(--gap-y);
         }
 
-        /* Slots */
         .slot { width: var(--p-width); height: var(--p-height); border: 1px dashed #e2e8f0; position: relative; background-color: #f8fafc; border-radius: 2px; }
         .slot.filled { border: 1px solid #cbd5e1; background-size: cover; background-position: center; cursor: pointer; }
         .slot.filled:hover::after { content: '×'; display: flex; align-items: center; justify-content: center; font-size: 20px; color: white; position: absolute; top:0; left:0; width:100%; height:100%; background: rgba(239, 68, 68, 0.6); }
@@ -92,44 +85,40 @@
 
         #debugLog { font-family: monospace; font-size: 10px; color: #666; background: #eee; padding: 5px; margin-top: 10px; height: 60px; overflow-y: auto; border: 1px solid #ccc; }
 
-        /* PRINT CLEAN MODE - UPDATED */
         @media print {
             body { display: block; background: white; }
             .sidebar { display: none !important; }
             .workspace { padding: 0; margin: 0; height: auto; background: white; overflow: visible; }
             #a4-sheet { 
                 box-shadow: none; margin: 0 auto; width: 100%; height: 100%; 
-                padding: 0; /* Let printer handle margins */
+                padding: 0; 
                 border: none; 
-                /* Ensure gaps are maintained on print */
                 column-gap: var(--gap-x);
                 row-gap: var(--gap-y);
                 align-content: center;
                 justify-content: center;
             }
-            /* HIDE EMPTY SLOTS */
             .slot { border: none !important; background: transparent !important; } 
-            /* SHOW FILLED ONLY - NO BORDERS */
             .slot.filled { 
-                border: none !important; /* REMOVED BORDER HERE */
+                border: none !important; 
                 -webkit-print-color-adjust: exact;
                 print-color-adjust: exact;
             }
         }
 
         .crop-box { height: 200px; background: #333; margin-bottom: 10px; border-radius: 4px; overflow: hidden;}
-        .loader { display:none; color: var(--primary); font-size: 0.75rem; text-align: center; margin-top:5px; padding: 5px; background: #dcfce7; border-radius: 4px;}
-        .server-badge { background:#dcfce7; color:#15803d; padding:4px 8px; border-radius:4px; font-size:0.75rem; font-weight:bold; display:flex; align-items:center; gap:5px; border:1px solid #86efac; }
+        .loader { display:none; color: #0284c7; font-size: 0.75rem; text-align: center; margin-top:5px; padding: 5px; background: #e0f2fe; border-radius: 4px;}
+        .server-badge { background:#e0f2fe; color:#0369a1; padding:4px 8px; border-radius:4px; font-size:0.75rem; font-weight:bold; display:flex; align-items:center; gap:5px; border:1px solid #bae6fd; }
     </style>
 </head>
 <body>
 
     <div class="sidebar">
-        <h2>Passport Studio <span style="font-size:0.7em; color:white; background:var(--primary); padding:2px 5px; border-radius:4px;">OFFLINE</span></h2>
+        <h2>Passport Studio <span style="font-size:0.7em; color:white; background:#0284c7; padding:2px 5px; border-radius:4px;">CLOUD</span></h2>
         
         <div class="server-badge">
-            <div style="width:8px; height:8px; background:#16a34a; border-radius:50%;"></div>
-            Mode: Localhost (Unlimited)
+            <div style="width:8px; height:8px; background:#0ea5e9; border-radius:50%;"></div>
+            Mode: ClipDrop API 
         </div>
 
         <div class="control-group">
@@ -153,10 +142,10 @@
 
             <hr style="border:0; border-top:1px solid #e2e8f0; margin:10px 0;">
 
-            <button onclick="runLocalRemBg()" id="remBgBtn" style="background: linear-gradient(135deg, #16a34a, #15803d);">
-                ⚡ AI Remove BG (Local)
+            <button onclick="runCloudRemBg()" id="remBgBtn" style="background: linear-gradient(135deg, #0ea5e9, #0284c7);">
+                ⚡ AI Remove BG (ClipDrop)
             </button>
-            <div id="loader" class="loader">Processing on your PC...</div>
+            <div id="loader" class="loader">Uploading to ClipDrop...</div>
             
             <button onclick="applyCrop()" class="secondary" style="margin-top:5px;">✂️ Apply Crop</button>
         </div>
@@ -190,6 +179,7 @@
     let cropper = null;
     let finalImageURL = null;
     let currentBg = 'white';
+    const CLIPDROP_API_KEY = 'q3GpV8AqvRVHDGkeg3uOvibOTvx2';
 
     function log(msg) {
         const el = document.getElementById('debugLog');
@@ -217,7 +207,6 @@
     }
 
     document.getElementById('imgInput').addEventListener('change', function(e) {
-        // UPDATED: Immediately clear previous image and cropper
         if(cropper) {
             cropper.destroy();
             cropper = null;
@@ -231,7 +220,6 @@
         reader.onload = (e) => {
             document.getElementById('cropImg').src = e.target.result;
             document.getElementById('editorPanel').classList.remove('hidden');
-            // Initialize new cropper
             cropper = new Cropper(document.getElementById('cropImg'), {
                 aspectRatio: ASPECT_RATIO, viewMode: 1
             });
@@ -246,46 +234,49 @@
         if(finalImageURL) applyCrop();
     }
 
-    // --- PURE OFFLINE LOCAL SERVER CONNECT ---
-    async function runLocalRemBg() {
+    // --- CLIPDROP API CONNECT ---
+    async function runCloudRemBg() {
         const loader = document.getElementById('loader');
         const btn = document.getElementById('remBgBtn');
         
         btn.disabled = true;
         loader.style.display = 'block';
-        log("Sending to Localhost:8000...");
+        log("Sending to ClipDrop API...");
 
-        // 1. Get image from cropper (High Quality)
-        cropper.getCroppedCanvas({ width: 800 }).toBlob(async (blob) => {
+        // Use lowest possible resolution (width: 300) to save bandwidth and speed up
+        cropper.getCroppedCanvas({ width: 300 }).toBlob(async (blob) => {
             const formData = new FormData();
-            formData.append('image_file', blob, "photo.png");
+            formData.append('image_file', blob, "photo.jpg"); // Sent as small jpeg
 
             try {
-                // 2. Connect to your running Python Server
-                const res = await fetch('http://127.0.0.1:8000/removebg', {
+                const res = await fetch('https://clipdrop-api.co/remove-background/v1', {
                     method: 'POST',
+                    headers: {
+                        'x-api-key': CLIPDROP_API_KEY
+                    },
                     body: formData
                 });
 
                 if(!res.ok) {
-                    throw new Error("Server Failed. Is the black window open?");
+                    const err = await res.json().catch(() => ({}));
+                    throw new Error(err.error || `HTTP Error ${res.status}`);
                 }
 
-                // 3. Receive Image & Update
+                // Receive Transparent PNG from API
                 const rBlob = await res.blob();
                 const url = URL.createObjectURL(rBlob);
                 cropper.replace(url);
-                log("Background Removed (Offline Success)!");
+                log("Background Removed (ClipDrop Success)!");
 
             } catch(e) {
                 console.error(e);
-                alert("Connection Failed! \n\n1. Check if 'server.py' is running.\n2. Ensure black window is open.\n3. Check console for errors.");
+                alert("ClipDrop Connection Failed! \n\nCheck your API limits or console for details.");
                 log("Error: " + e.message);
             } finally {
                 loader.style.display = 'none';
                 btn.disabled = false;
             }
-        });
+        }, 'image/jpeg', 0.8); // 80% quality JPEG for lowest payload size
     }
 
     function applyCrop() {
